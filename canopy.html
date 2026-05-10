@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f2e1e">
+<title>Canopy · AI Farmland Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#1d9e75;--green-d:#0f6e50;--green-dk:#0a4a35;--green-l:#e4f5ee;--green-ll:#f0faf5;
+  --amber:#d4870f;--amber-l:#fdf3e0;
+  --red:#c0392b;--red-l:#fdecea;
+  --text:#0f1c14;--muted:#5a6b61;--light:#a8b8ae;
+  --border:#d8e8de;--bg:#f4f7f5;--white:#ffffff;
+  --card-shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.04);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-top:env(safe-area-inset-top,0px);
+}
+
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);font-size:16px;-webkit-font-smoothing:antialiased}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;height:100%;padding-top:var(--safe-top)}
+.screen{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(72px + var(--safe-bottom))}
+.screen.active{display:block}
+
+/* ── HEADER ── */
+.header{position:sticky;top:0;z-index:100;background:rgba(15,46,30,0.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:14px 20px 12px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.header-inner{display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-mark{width:32px;height:32px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark svg{width:18px;height:18px}
+.logo-name{font-size:17px;font-weight:600;color:#fff;letter-spacing:-.4px}
+.logo-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.4px;margin-top:1px}
+.header-badge{background:rgba(29,158,117,.25);color:#7de8bf;font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:.3px;border:1px solid rgba(29,158,117,.3)}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(255,255,255,0.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--border);display:flex;padding:8px 0;padding-bottom:calc(8px + var(--safe-bottom))}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;-webkit-tap-highlight-color:transparent;transition:.15s}
+.nav-tab svg{width:22px;height:22px;stroke:var(--light);stroke-width:1.8;fill:none;transition:.15s}
+.nav-tab span{font-size:10px;color:var(--light);font-weight:500;transition:.15s}
+.nav-tab.active svg{stroke:var(--green)}
+.nav-tab.active span{color:var(--green)}
+
+/* ── HERO / DASHBOARD ── */
+.hero{background:linear-gradient(160deg,#0f2e1e 0%,#1a4a2e 50%,#0f3525 100%);padding:28px 20px 32px;margin-bottom:0}
+.hero-label{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.hero-title{font-size:26px;font-weight:600;color:#fff;line-height:1.2;letter-spacing:-.5px;margin-bottom:6px}
+.hero-sub{font-size:14px;color:rgba(255,255,255,.55);line-height:1.5;margin-bottom:20px}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hero-stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px}
+.hero-stat-val{font-size:24px;font-weight:600;color:#fff;letter-spacing:-.5px}
+.hero-stat-label{font-size:11px;color:rgba(255,255,255,.45);margin-top:3px}
+.hero-stat-delta{font-size:11px;color:#7de8bf;margin-top:2px}
+
+.section{padding:20px}
+.section-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:12px}
+
+/* ── CARDS ── */
+.card{background:var(--white);border-radius:14px;box-shadow:var(--card-shadow);border:1px solid var(--border);margin-bottom:12px;overflow:hidden}
+.card-head{padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-body{padding:14px 16px}
+
+/* ── PARCEL ROWS ── */
+.parcel-row{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);gap:12px;cursor:pointer;transition:.1s;-webkit-tap-highlight-color:rgba(29,158,117,.05)}
+.parcel-row:active{background:#f0faf5}
+.parcel-row:last-child{border-bottom:none}
+.parcel-score{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.parcel-info{flex:1;min-width:0}
+.parcel-id{font-size:14px;font-weight:600;color:var(--text)}
+.parcel-loc{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.parcel-meta{display:flex;align-items:center;gap:6px;flex-shrink:0;flex-direction:column;align-items:flex-end}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.bg{background:var(--green-l);color:var(--green-d)}
+.ba{background:var(--amber-l);color:var(--amber)}
+.bb{background:#e6f0fb;color:#1a5cb5}
+.br{background:var(--red-l);color:var(--red)}
+.bk{background:#f0ede8;color:#5a5a55}
+
+/* ── MEMO GENERATOR ── */
+.gen-header{background:linear-gradient(160deg,#0f2e1e,#1a4a2e);padding:24px 20px;color:#fff}
+.gen-title{font-size:20px;font-weight:600;letter-spacing:-.3px;margin-bottom:4px}
+.gen-sub{font-size:13px;color:rgba(255,255,255,.5)}
+
+.form-section{padding:20px}
+.form-label{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;display:block;letter-spacing:.1px}
+.form-input{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--white);outline:none;-webkit-appearance:none;transition:.15s;margin-bottom:14px}
+.form-input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row .form-input{margin-bottom:0}
+.form-row-wrap{margin-bottom:14px}
+select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6b61' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+textarea.form-input{resize:none;height:80px;line-height:1.5}
+
+.gen-btn{width:calc(100% - 40px);margin:0 20px 20px;padding:16px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;-webkit-tap-highlight-color:transparent}
+.gen-btn:active{background:var(--green-d);transform:scale(.98)}
+.gen-btn:disabled{opacity:.6}
+
+.memo-result{margin:0 20px 20px;border-radius:12px;border:1.5px solid var(--border);overflow:hidden;display:none}
+.memo-result-head{background:var(--green-ll);padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.memo-result-title{font-size:13px;font-weight:600;color:var(--green-d)}
+.memo-result-body{padding:14px;font-size:12px;font-family:'DM Mono',monospace;line-height:1.7;color:var(--text);white-space:pre-wrap;background:#fff;max-height:400px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.export-btn{background:var(--green-d);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer}
+
+/* ── PIPELINE ── */
+.pipeline-header{background:linear-gradient(160deg,#0f2e1e,#1a4a2e);padding:24px 20px;color:#fff}
+
+/* ── MAP ── */
+.map-container{margin:20px;border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--card-shadow)}
+.map-svg-area{background:linear-gradient(145deg,#daeee4,#c8e8d4,#b8ddc8);height:260px;position:relative;display:block}
+.map-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;transition:.15s}
+.map-pin:active{transform:translate(-50%,-50%) scale(1.2)}
+.map-pin-circle{width:28px;height:28px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.map-legend{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px 14px;background:#fff;border-top:1px solid var(--border)}
+.map-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.map-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+.map-cards{padding:0 20px 20px;display:flex;flex-direction:column;gap:10px}
+
+/* ── DETAIL SHEET ── */
+.sheet-overlay{position:fixed;inset:0;z-index:300;display:none}
+.sheet-overlay.open{display:block}
+.sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sheet{position:absolute;bottom:0;left:0;right:0;background:var(--white);border-radius:20px 20px 0 0;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;padding-bottom:var(--safe-bottom);transform:translateY(100%);transition:transform .35s cubic-bezier(.22,1,.36,1)}
+.sheet-overlay.open .sheet{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
+.sheet-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sheet-title{font-size:17px;font-weight:600}
+.sheet-close{width:28px;height:28px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--muted)}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 20px}
+.sheet-score{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;border-radius:12px;background:var(--green-ll);border:1px solid var(--border)}
+.sheet-score-num{font-size:44px;font-weight:700;color:var(--green);line-height:1}
+.sheet-score-label{font-size:12px;color:var(--muted);margin-top:2px}
+.sheet-score-rec{font-size:13px;font-weight:600;color:var(--green-d);margin-top:4px}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.data-row:last-child{border-bottom:none}
+.data-key{font-size:13px;color:var(--muted)}
+.data-val{font-size:13px;font-weight:600;color:var(--text);text-align:right}
+.section-head{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin:16px 0 8px}
+
+/* ── SPINNER ── */
+.spinner{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── UPLOAD ── */
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;background:#fafcfa;margin-bottom:14px;transition:.15s}
+.upload-zone:active{border-color:var(--green);background:var(--green-ll)}
+.upload-icon{font-size:32px;margin-bottom:8px}
+.upload-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--muted)}
+.csv-preview{background:#f4f7f5;border-radius:10px;padding:12px;margin-bottom:14px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text);line-height:1.6;display:none}
+
+/* ── TABS ── */
+.tab-bar{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin:0 20px 16px}
+.tab-btn{flex:1;padding:8px;border:none;background:transparent;border-radius:8px;font-size:13px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif;cursor:pointer;transition:.15s}
+.tab-btn.active{background:#fff;color:var(--green);box-shadow:0 1px 3px rgba(0,0,0,.08);font-weight:600}
+
+/* ── ACTIVITY ── */
+.activity-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-row:last-child{border-bottom:none}
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.act-text{font-size:13px;color:var(--text);line-height:1.4}
+.act-time{font-size:11px;color:var(--light);margin-top:2px}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══ SCREEN: DASHBOARD ══ -->
+  <div class="screen active" id="screen-dashboard">
+    <div class="header">
+      <div class="header-inner">
+        <div class="logo">
+          <div class="logo-mark">
+            <svg viewBox="0 0 18 18" fill="none"><path d="M9 2C6 2 3.5 4.5 3.5 7.5c0 2.2 1.2 4.1 3 5.1L6 15h6l-.5-2.4c1.8-1 3-2.9 3-5.1C14.5 4.5 12 2 9 2z" fill="white" fill-opacity=".95"/><rect x="7" y="15" width="4" height="1.5" rx=".6" fill="white" fill-opacity=".6"/></svg>
+          </div>
+          <div>
+            <div class="logo-name">Canopy</div>
+            <div class="logo-sub">AI FARMLAND INTELLIGENCE</div>
+          </div>
+        </div>
+        <div class="header-badge">BETA</div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-label">Portfolio overview · May 2026</div>
+      <div class="hero-title">3 weeks → 4 minutes.</div>
+      <div class="hero-sub">AI-powered farmland underwriting for institutional land funds.</div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-val" id="dash-memo-count">47</div>
+          <div class="hero-stat-label">Memos generated</div>
+          <div class="hero-stat-delta">↑ +12 this week</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">$340M</div>
+          <div class="hero-stat-label">Deal value covered</div>
+          <div class="hero-stat-delta">↑ +$48M this month</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">82</div>
+          <div class="hero-stat-label">Avg land score</div>
+          <div class="hero-stat-delta">SSURGO weighted</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-val">4.2<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,.4)"> min</span></div>
+          <div class="hero-stat-label">Avg memo time</div>
+          <div class="hero-stat-delta">vs 3 weeks manual</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:20px;padding-bottom:6px">
+      <div class="section-label">Active parcels</div>
+      <div class="card" style="margin-bottom:0" id="dash-parcels"></div>
+    </div>
+
+    <div class="section" style="padding-top:16px;padding-bottom:6px">
+      <div class="section-label">Recent activity</div>
+      <div class="card">
+        <div class="card-body" style="padding:0 16px">
+          <div class="activity-row"><div class="act-dot" style="background:var(--green)"></div><div><div class="act-text">Memo approved — IA-0088 · $18.9M deal</div><div class="act-time">2 hours ago</div></div></div>
+          <div class="activity-row"><div class="act-dot" style="background:var(--amber)"></div><div><div class="act-text">Water rights flagged — WA-0412 dispute detected</div><div class="act-time">5 hours ago</div></div></div>
+          <div class="activity-row"><div class="act-dot" style="background:var(--green)"></div><div><div class="act-text">Memo generated — CA-2841 in 3.8 min</div><div class="act-time">Yesterday</div></div></div>
+          <div class="activity-row"><div class="act-dot" style="background:#378add"></div><div><div class="act-text">Beta client added — Greenfield Capital</div><div class="act-time">2 days ago</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: MEMO GENERATOR ══ -->
+  <div class="screen" id="screen-generator">
+    <div class="header">
+      <div class="header-inner">
+        <div class="logo">
+          <div class="logo-mark"><svg viewBox="0 0 18 18" fill="none"><path d="M9 2C6 2 3.5 4.5 3.5 7.5c0 2.2 1.2 4.1 3 5.1L6 15h6l-.5-2.4c1.8-1 3-2.9 3-5.1C14.5 4.5 12 2 9 2z" fill="white" fill-opacity=".95"/><rect x="7" y="15" width="4" height="1.5" rx=".6" fill="white" fill-opacity=".6"/></svg></div>
+          <div><div class="logo-name">Generate Memo</div><div class="logo-sub">AI UNDERWRITING</div></div>
+        </div>
+        <div class="header-badge">AI</div>
+      </div>
+    </div>
+
+    <div class="tab-bar" style="margin-top:16px">
+      <button class="tab-btn active" id="tab-manual-btn" onclick="switchInputTab('manual')">Enter manually</button>
+      <button class="tab-btn" id="tab-csv-btn" onclick="switchInputTab('csv')">Upload CSV</button>
+    </div>
+
+    <!-- MANUAL FORM -->
+    <div id="manual-inputs">
+      <div class="form-section" style="padding-top:0">
+        <div class="form-row form-row-wrap">
+          <div><label class="form-label">APN / Parcel ID</label><input class="form-input" id="f-apn" placeholder="e.g. CA-2841" autocorrect="off" autocapitalize="off"></div>
+          <div><label class="form-label">County, State</label><input class="form-input" id="f-county" placeholder="e.g. Kern, CA" autocorrect="off"></div>
+        </div>
+        <div class="form-row form-row-wrap">
+          <div><label class="form-label">Total acres</label><input class="form-input" id="f-acres" type="number" inputmode="numeric" placeholder="e.g. 1240"></div>
+          <div><label class="form-label">Est. value ($)</label><input class="form-input" id="f-value" placeholder="e.g. 12000000" inputmode="numeric"></div>
+        </div>
+        <label class="form-label">Primary crop</label>
+        <select class="form-input" id="f-crop">
+          <option value="">Select crop type</option>
+          <option>Corn</option><option>Soybeans</option><option>Wheat</option><option>Cotton</option>
+          <option>Almonds</option><option>Pistachios</option><option>Grapes</option><option>Hay</option><option>Other</option>
+        </select>
+        <label class="form-label">Water rights status</label>
+        <select class="form-input" id="f-water">
+          <option value="">Select status</option>
+          <option>Senior rights</option><option>Junior rights</option><option>Riparian</option>
+          <option>Disputed</option><option>Unconfirmed</option>
+        </select>
+        <label class="form-label">Additional notes (optional)</label>
+        <textarea class="form-input" id="f-notes" placeholder="Irrigation type, flood history, ESG flags..."></textarea>
+      </div>
+    </div>
+
+    <!-- CSV UPLOAD -->
+    <div id="csv-inputs" style="display:none;padding:0 20px">
+      <div class="upload-zone" onclick="document.getElementById('csv-file').click()">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Tap to upload CSV</div>
+        <div class="upload-sub">Columns: APN, County, State, Acres, Value, Crop, Water</div>
+        <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCSV(event)">
+      </div>
+      <div class="csv-preview" id="csv-preview"></div>
+    </div>
+
+    <button class="gen-btn" id="gen-btn" onclick="generateMemo()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+      Generate underwriting memo
+    </button>
+
+    <div class="memo-result" id="memo-result">
+      <div class="memo-result-head">
+        <div class="memo-result-title">✓ Memo generated</div>
+        <button class="export-btn" onclick="exportMemo()">↓ Save</button>
+      </div>
+      <div class="memo-result-body" id="memo-output"></div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: PIPELINE ══ -->
+  <div class="screen" id="screen-pipeline">
+    <div class="header">
+      <div class="header-inner">
+        <div class="logo">
+          <div class="logo-mark"><svg viewBox="0 0 18 18" fill="none"><path d="M9 2C6 2 3.5 4.5 3.5 7.5c0 2.2 1.2 4.1 3 5.1L6 15h6l-.5-2.4c1.8-1 3-2.9 3-5.1C14.5 4.5 12 2 9 2z" fill="white" fill-opacity=".95"/><rect x="7" y="15" width="4" height="1.5" rx=".6" fill="white" fill-opacity=".6"/></svg></div>
+          <div><div class="logo-name">Deal Pipeline</div><div class="logo-sub">ACTIVE PARCELS</div></div>
+        </div>
+        <div class="header-badge" id="pipeline-count-badge">5 deals</div>
+      </div>
+    </div>
+
+    <div class="section" style="padding-top:16px;padding-bottom:0">
+      <div class="section-label">All parcels · tap to view memo</div>
+      <div class="card" id="pipeline-list"></div>
+    </div>
+
+    <div class="section" style="padding-top:16px">
+      <div class="section-label">Pipeline health</div>
+      <div class="card">
+        <div class="card-body" id="pipeline-health"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: MAP ══ -->
+  <div class="screen" id="screen-map">
+    <div class="header">
+      <div class="header-inner">
+        <div class="logo">
+          <div class="logo-mark"><svg viewBox="0 0 18 18" fill="none"><path d="M9 2C6 2 3.5 4.5 3.5 7.5c0 2.2 1.2 4.1 3 5.1L6 15h6l-.5-2.4c1.8-1 3-2.9 3-5.1C14.5 4.5 12 2 9 2z" fill="white" fill-opacity=".95"/><rect x="7" y="15" width="4" height="1.5" rx=".6" fill="white" fill-opacity=".6"/></svg></div>
+          <div><div class="logo-name">Parcel Map</div><div class="logo-sub">GEOGRAPHIC VIEW</div></div>
+        </div>
+        <div class="header-badge">USA</div>
+      </div>
+    </div>
+
+    <div style="padding:16px 20px 8px">
+      <div class="map-container">
+        <div class="map-svg-area" id="map-area">
+          <!-- US outline rough SVG -->
+          <svg style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:.12" viewBox="0 0 400 220" preserveAspectRatio="xMidYMid meet">
+            <path d="M30,60 L80,40 L160,35 L240,40 L310,50 L370,60 L380,90 L360,120 L340,150 L300,170 L250,180 L200,175 L150,170 L100,160 L60,140 L30,110 Z" fill="none" stroke="#1d9e75" stroke-width="1.5"/>
+            <text x="100" y="100" font-size="8" fill="#1d9e75" font-family="monospace" opacity=".6">Pacific Coast</text>
+            <text x="200" y="85" font-size="8" fill="#1d9e75" font-family="monospace" opacity=".6">Midwest</text>
+            <text x="290" y="105" font-size="8" fill="#1d9e75" font-family="monospace" opacity=".6">East</text>
+            <text x="160" y="150" font-size="8" fill="#1d9e75" font-family="monospace" opacity=".6">Southwest</text>
+          </svg>
+        </div>
+        <div class="map-legend">
+          <div class="map-leg-item"><div class="map-leg-dot" style="background:#1d9e75"></div>Score 80+</div>
+          <div class="map-leg-item"><div class="map-leg-dot" style="background:#d4870f"></div>Score 65–79</div>
+          <div class="map-leg-item"><div class="map-leg-dot" style="background:#c0392b"></div>Score &lt;65</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-cards" id="map-cards"></div>
+  </div>
+
+  <!-- ══ BOTTOM NAV ══ -->
+  <nav class="bottom-nav">
+    <div class="nav-tab active" id="nav-dashboard" onclick="switchScreen('dashboard')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-tab" id="nav-generator" onclick="switchScreen('generator')">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+      <span>Memo</span>
+    </div>
+    <div class="nav-tab" id="nav-pipeline" onclick="switchScreen('pipeline')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+      <span>Pipeline</span>
+    </div>
+    <div class="nav-tab" id="nav-map" onclick="switchScreen('map')">
+      <svg viewBox="0 0 24 24"><polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <span>Map</span>
+    </div>
+  </nav>
+
+  <!-- ══ PARCEL DETAIL SHEET ══ -->
+  <div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet(event)">
+    <div class="sheet-backdrop"></div>
+    <div class="sheet" id="detail-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <div class="sheet-title" id="sheet-parcel-id">IA-0088</div>
+        <button class="sheet-close" onclick="closeSheetDirect()">✕</button>
+      </div>
+      <div class="sheet-body" id="sheet-body"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const PARCELS=[
+  {id:'IA-0088',loc:'Cass County, IA',acres:2100,value:'$18.9M',score:93,water:'Senior',status:'approved',crop:'Corn / Soy',ndvi:'0.74',soil:'Clarion loam',pi:'148',drainage:'Well drained',mapX:'62%',mapY:'36%'},
+  {id:'CA-2841',loc:'Kern County, CA',acres:1240,value:'$14.2M',score:88,water:'Senior',status:'ready',crop:'Almonds',ndvi:'0.68',soil:'Sandy clay loam',pi:'131',drainage:'Well drained',mapX:'8%',mapY:'52%'},
+  {id:'CA-3102',loc:'Tulare County, CA',acres:870,value:'$9.1M',score:76,water:'Junior',status:'ready',crop:'Pistachios',ndvi:'0.61',soil:'Clay loam',pi:'112',drainage:'Moderate',mapX:'9%',mapY:'58%'},
+  {id:'WA-0412',loc:'Walla Walla, WA',acres:560,value:'$5.8M',score:71,water:'Disputed',status:'review',crop:'Wheat',ndvi:'0.58',soil:'Silty loam',pi:'108',drainage:'Moderate',mapX:'9%',mapY:'22%'},
+  {id:'AZ-1190',loc:'Maricopa, AZ',acres:3400,value:'$28.4M',score:61,water:'Unconfirmed',status:'pending',crop:'Cotton',ndvi:'0.48',soil:'Sandy loam',pi:'88',drainage:'Poor',mapX:'18%',mapY:'68%'},
+];
+
+const STATUS={approved:{label:'Approved',cls:'bg'},ready:{label:'Memo ready',cls:'bb'},review:{label:'Review',cls:'ba'},pending:{label:'Pending',cls:'bk'}};
+const WATER_CLS={Senior:'bg',Junior:'ba',Riparian:'bg',Disputed:'br',Unconfirmed:'bk'};
+const scoreColor=s=>s>=80?'#1d9e75':s>=65?'#d4870f':'#c0392b';
+const scoreRec=s=>s>=85?'Strong buy — approve':'Conditional — verify water rights first';
+
+// ── RENDER ──
+function renderAll(){
+  renderDash();renderPipeline();renderMap();
+}
+
+function renderDash(){
+  document.getElementById('dash-parcels').innerHTML=PARCELS.map(p=>parcelRow(p)).join('');
+}
+
+function parcelRow(p){
+  return`<div class="parcel-row" onclick="openSheet('${p.id}')">
+    <div class="parcel-score" style="background:${scoreColor(p.score)}">${p.score}</div>
+    <div class="parcel-info">
+      <div class="parcel-id">${p.id}</div>
+      <div class="parcel-loc">${p.loc} · ${p.acres.toLocaleString()} ac</div>
+    </div>
+    <div class="parcel-meta">
+      <span class="badge ${STATUS[p.status].cls}">${STATUS[p.status].label}</span>
+      <span class="badge ${WATER_CLS[p.water]||'bk'}" style="margin-top:3px">${p.water}</span>
+    </div>
+  </div>`;
+}
+
+function renderPipeline(){
+  document.getElementById('pipeline-list').innerHTML=PARCELS.map(p=>parcelRow(p)).join('');
+  document.getElementById('pipeline-count-badge').textContent=PARCELS.length+' deals';
+  const approved=PARCELS.filter(p=>p.status==='approved').length;
+  const review=PARCELS.filter(p=>p.status==='review').length;
+  const pending=PARCELS.filter(p=>p.status==='pending'||p.status==='ready').length;
+  document.getElementById('pipeline-health').innerHTML=`
+    ${bar('Approved',approved,PARCELS.length,'var(--green)')}
+    ${bar('In review',review,PARCELS.length,'var(--amber)')}
+    ${bar('Pending / memo ready',pending,PARCELS.length,'#aaa')}
+  `;
+}
+
+function bar(label,n,total,color){
+  const pct=Math.round(n/total*100);
+  return`<div style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+      <span style="color:var(--muted)">${label}</span>
+      <span style="font-weight:600">${n}</span>
+    </div>
+    <div style="height:6px;background:#f0ede8;border-radius:3px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:.4s"></div>
+    </div>
+  </div>`;
+}
+
+function renderMap(){
+  const area=document.getElementById('map-area');
+  // remove old pins
+  area.querySelectorAll('.map-pin').forEach(e=>e.remove());
+  PARCELS.forEach(p=>{
+    const pin=document.createElement('div');
+    pin.className='map-pin';
+    pin.style.left=p.mapX;pin.style.top=p.mapY;
+    pin.innerHTML=`<div class="map-pin-circle" style="background:${scoreColor(p.score)}">${p.score}</div>`;
+    pin.onclick=()=>openSheet(p.id);
+    area.appendChild(pin);
+  });
+  document.getElementById('map-cards').innerHTML=PARCELS.map(p=>`
+    <div class="card" style="margin-bottom:0;cursor:pointer" onclick="openSheet('${p.id}')">
+      <div style="display:flex;align-items:center;gap:12px;padding:13px 16px">
+        <div class="parcel-score" style="background:${scoreColor(p.score)};width:38px;height:38px;font-size:13px">${p.score}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${p.id}</div>
+          <div style="font-size:12px;color:var(--muted)">${p.loc} · ${p.acres.toLocaleString()} ac</div>
+        </div>
+        <span class="badge ${STATUS[p.status].cls}">${STATUS[p.status].label}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── NAVIGATION ──
+function switchScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  // scroll to top
+  document.getElementById('screen-'+name).scrollTop=0;
+}
+
+// ── INPUT TABS ──
+function switchInputTab(tab){
+  document.getElementById('tab-manual-btn').classList.toggle('active',tab==='manual');
+  document.getElementById('tab-csv-btn').classList.toggle('active',tab==='csv');
+  document.getElementById('manual-inputs').style.display=tab==='manual'?'block':'none';
+  document.getElementById('csv-inputs').style.display=tab==='csv'?'block':'none';
+}
+
+// ── SHEET ──
+function openSheet(id){
+  const p=PARCELS.find(x=>x.id===id);if(!p)return;
+  document.getElementById('sheet-parcel-id').textContent=p.id+' · '+p.loc;
+  document.getElementById('sheet-body').innerHTML=`
+    <div class="sheet-score">
+      <div>
+        <div class="sheet-score-num" style="color:${scoreColor(p.score)}">${p.score}</div>
+        <div class="sheet-score-label">Land quality score / 100</div>
+        <div class="sheet-score-rec">${scoreRec(p.score)}</div>
+      </div>
+      <span class="badge ${STATUS[p.status].cls}" style="font-size:12px;padding:5px 12px">${STATUS[p.status].label}</span>
+    </div>
+    <div class="section-head">Parcel overview</div>
+    ${drow('Parcel ID',p.id)}${drow('Location',p.loc)}${drow('Total acres',p.acres.toLocaleString()+' ac')}${drow('Est. value',p.value)}${drow('Primary crop',p.crop)}
+    <div class="section-head">Soil analysis · SSURGO</div>
+    ${drow('Dominant type',p.soil)}${drow('Productivity index',p.pi)}${drow('Drainage class',p.drainage)}
+    <div class="section-head">Water rights</div>
+    ${drow('Status','<span class="badge '+( WATER_CLS[p.water]||'bk')+'">'+p.water+'</span>')}
+    ${drow('Risk level',p.water==='Senior'?'Low':p.water==='Disputed'?'High':'Moderate')}
+    <div class="section-head">Satellite · Sentinel-2</div>
+    ${drow('5yr NDVI avg',p.ndvi)}${drow('Crop health',parseFloat(p.ndvi)>0.65?'Strong, consistent':'Moderate variability')}
+    <div style="margin-top:20px">
+      <button onclick="openMemoForParcel('${p.id}')" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer">✨ Generate full AI memo</button>
+    </div>
+  `;
+  document.getElementById('sheet-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function drow(k,v){return`<div class="data-row"><span class="data-key">${k}</span><span class="data-val">${v}</span></div>`;}
+
+function closeSheet(e){if(e.target===e.currentTarget||e.target.classList.contains('sheet-backdrop'))closeSheetDirect();}
+function closeSheetDirect(){
+  document.getElementById('sheet-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function openMemoForParcel(id){
+  closeSheetDirect();
+  const p=PARCELS.find(x=>x.id===id);if(!p)return;
+  switchScreen('generator');
+  document.getElementById('f-apn').value=p.id;
+  document.getElementById('f-county').value=p.loc;
+  document.getElementById('f-acres').value=p.acres;
+  document.getElementById('f-value').value=p.value.replace(/\D/g,'')||'';
+  document.getElementById('f-notes').value='Pre-loaded from pipeline. Soil: '+p.soil+'. NDVI: '+p.ndvi+'.';
+}
+
+// ── MEMO GENERATOR ──
+async function generateMemo(){
+  const apn=document.getElementById('f-apn').value.trim();
+  const county=document.getElementById('f-county').value.trim();
+  const acres=document.getElementById('f-acres').value.trim();
+  const value=document.getElementById('f-value').value.trim();
+  const crop=document.getElementById('f-crop').value;
+  const water=document.getElementById('f-water').value;
+  const notes=document.getElementById('f-notes').value.trim();
+
+  if(!apn||!county||!acres){
+    alert('Please fill in APN, County/State, and Acres at minimum.');return;
+  }
+
+  const btn=document.getElementById('gen-btn');
+  btn.innerHTML='<span class="spinner"></span> Analyzing parcel...';
+  btn.disabled=true;
+  document.getElementById('memo-result').style.display='none';
+
+  const prompt=`You are Canopy, an AI farmland underwriting assistant for institutional land fund managers. Generate a professional underwriting memo for this parcel. Be specific, data-grounded, and concise. Use realistic estimated figures; note when field verification is needed.
+
+Parcel data:
+- APN: ${apn}
+- Location: ${county}
+- Acres: ${acres}
+- Est. value: ${value||'Not provided'}
+- Primary crop: ${crop||'Not specified'}
+- Water rights: ${water||'Not specified'}
+- Notes: ${notes||'None'}
+
+Format the memo with these exact sections:
+1. EXECUTIVE SUMMARY (2-3 sentences, investment stance)
+2. PARCEL OVERVIEW (APN, location, acres, value, $/acre)
+3. SOIL ANALYSIS (SSURGO-based: dominant type, productivity index, drainage, score /100)
+4. WATER RIGHTS ASSESSMENT (risk level, state system, recommendation)
+5. SATELLITE ANALYSIS (NDVI estimate, crop health trend)
+6. RISK FACTORS (3-4 bullet points)
+7. UNDERWRITING RECOMMENDATION (Approve / Conditional / Hold / Decline + rationale)
+
+Keep tone institutional and precise.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const text=data.content?.find(b=>b.type==='text')?.text||'Error generating memo.';
+    document.getElementById('memo-output').textContent=text;
+    document.getElementById('memo-result').style.display='block';
+    // Scroll to result
+    setTimeout(()=>document.getElementById('memo-result').scrollIntoView({behavior:'smooth',block:'start'}),100);
+    // Add to pipeline if new
+    if(!PARCELS.find(p=>p.id===apn)){
+      const score=Math.floor(62+Math.random()*32);
+      PARCELS.push({id:apn,loc:county,acres:parseInt(acres)||0,value:'$'+Math.round(parseInt(value||0)/1e6*10)/10+'M',score,water:(water||'Unconfirmed').split(' ')[0],status:'ready',crop:crop||'Mixed',ndvi:(0.50+score/200).toFixed(2),soil:'Estimated from SSURGO',pi:String(Math.floor(80+score)),drainage:'Moderate',mapX:Math.floor(10+Math.random()*70)+'%',mapY:Math.floor(20+Math.random()*50)+'%'});
+      renderAll();
+    }
+    document.getElementById('dash-memo-count').textContent=parseInt(document.getElementById('dash-memo-count').textContent)+1;
+  }catch(err){
+    alert('Could not connect to AI. Check your connection and try again.');
+  }
+  btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg> Generate underwriting memo';
+  btn.disabled=false;
+}
+
+function exportMemo(){
+  const text=document.getElementById('memo-output').textContent;
+  const blob=new Blob([text],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Canopy_Memo_'+Date.now()+'.txt';
+  a.click();
+}
+
+// ── CSV ──
+function handleCSV(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const lines=ev.target.result.trim().split('\n');
+    const headers=lines[0].split(',').map(h=>h.trim());
+    const rows=lines.slice(1,4).map(l=>l.split(',').map(c=>c.trim()));
+    const preview=document.getElementById('csv-preview');
+    preview.style.display='block';
+    preview.textContent=`✓ Loaded ${lines.length-1} parcels\n\n`+[headers,...rows].map(r=>r.join(' | ')).join('\n')+(lines.length>4?`\n... +${lines.length-4} more`:'');
+  };
+  reader.readAsText(file);
+}
+
+// ── INIT ──
+renderAll();
+</script>
+</body>
+</html>
