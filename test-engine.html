@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Canopy Engine Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+  input { width: 100%; padding: 10px; margin: 10px 0; font-size: 15px; }
+  button { padding: 10px 20px; font-size: 15px; cursor: pointer; }
+  pre { background: #f4f4f4; padding: 16px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; }
+  .error { color: #b00020; }
+</style>
+</head>
+<body>
+  <h2>Canopy Real Engine — Test Page</h2>
+  <p>This calls REAL government APIs (Nominatim geocoding + FEMA flood data). No fake numbers.</p>
+
+  <input id="addr" type="text" value="Yolo County, CA" placeholder="Type an address or county">
+  <button id="go">Run real scan</button>
+
+  <pre id="out">Results will show here.</pre>
+
+  <script src="engine.js"></script>
+  <script>
+    document.getElementById('go').addEventListener('click', async function() {
+      const out = document.getElementById('out');
+      out.textContent = 'Running... (this calls two real APIs, give it a couple seconds)';
+      out.className = '';
+      try {
+        const result = await runRealScan(document.getElementById('addr').value);
+        out.textContent = JSON.stringify(result, null, 2);
+      } catch (err) {
+        out.className = 'error';
+        out.textContent = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
