@@ -70,7 +70,7 @@ async function getFloodZone(lat, lon) {
   // This queries FEMA's public National Flood Hazard Layer (NFHL)
   // map service directly — it's a government GIS server that allows
   // "identify" queries: "what flood zone is at this exact point?"
-  const baseUrl = 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHL/MapServer/28/query';
+  const baseUrl = 'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query';
 
   const params = new URLSearchParams({
     geometry: `${lon},${lat}`,

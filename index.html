@@ -245,6 +245,11 @@ cursor:pointer;margin-top:6px;
 .src-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--line);color:var(--ink-dim)}
 .src-row:last-child{border-bottom:none}
 .src-ok{color:var(--green);font-family:var(--mono);font-size:11px}
+.partial{color:var(--clay)}
+.memo-score.focus{border-color:var(--gold)}
+.memo-score.focus .l::after{content:' · focus';color:var(--gold)}
+.memo-notes{margin:-8px 0 18px}
+.memo-note{font-size:12.5px;color:var(--ink-dim);background:var(--clay-dim);border-left:2px solid var(--clay);padding:9px 12px;margin-bottom:8px;border-radius:2px}
 .src-fail{color:var(--clay);font-family:var(--mono);font-size:11px}
 .comps-panel{
 background:var(--bg-raised);border:1px solid var(--line);border-radius:4px;
@@ -296,7 +301,32 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-
 .foot-links{display:flex;gap:28px;font-size:13px;color:var(--ink-dim)}
 .foot-links a:hover{color:var(--ink)}
 .foot-note{font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+.demo-map{grid-column:1/-1;position:relative;z-index:0;isolation:isolate;border-bottom:1px solid var(--line)}
+#parcelMap{height:400px;background:var(--bg-panel);border-radius:4px 4px 0 0;cursor:crosshair}
+@media (max-width:640px){#parcelMap{height:320px}}
+.map-bar{
+position:absolute;left:12px;bottom:12px;z-index:500;
+display:flex;align-items:center;gap:8px;flex-wrap:wrap;max-width:calc(100% - 24px);
+}
+.map-chip{
+font-family:var(--mono);font-size:11.5px;color:var(--ink);
+background:rgba(18,20,15,0.88);border:1px solid var(--line-strong);
+padding:7px 11px;border-radius:2px;backdrop-filter:blur(6px);
+}
+.map-chip strong{color:var(--gold);font-weight:500}
+.map-btn{cursor:pointer}
+.map-btn:hover{border-color:var(--gold);color:var(--gold)}
+.map-btn:disabled{opacity:0.4;cursor:default;border-color:var(--line-strong);color:var(--ink)}
+.parcel-vertex{width:10px;height:10px;background:var(--gold);border:2px solid #1A1605;border-radius:50%}
+.leaflet-container{font-family:var(--sans)}
+.leaflet-bar a,.leaflet-control-layers{background:#191C13 !important;color:var(--ink) !important;border-color:var(--line-strong) !important}
+.leaflet-bar a:hover{background:#1E2217 !important;color:var(--gold) !important}
+.leaflet-control-layers-expanded{color:var(--ink)}
+.leaflet-control-attribution{background:rgba(18,20,15,0.75) !important;color:var(--ink-faint) !important}
+.leaflet-control-attribution a{color:var(--ink-dim) !important}
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
 <header>
@@ -323,7 +353,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-
 <a href="#demo" class="btn btn-primary">Run a parcel scan →</a>
 <a href="#lenses" class="btn btn-ghost">See how scoring works</a>
 </div>
-<p class="trust-line">Live public data · USDA, FEMA, and OpenStreetMap sources · queried in real time</p>
+<p class="trust-line">Live public data · FEMA, USGS, and NLCD sources · queried in real time</p>
 </div>
 <div class="scan">
 <div class="scan-head">
@@ -488,13 +518,22 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-
 <div class="section-head">
 <span class="eyebrow">Try it</span>
 <h2>Run a parcel scan.</h2>
-<p>Enter a real US address or county. This queries live public data — USDA climate records, FEMA flood maps, and OpenStreetMap land-use data — not a canned demo.</p>
+<p>Click the map to outline a parcel — or enter a real US address or county. This queries live public data — climate records, FEMA flood maps, USGS stream data, and national land-cover maps — not a canned demo.</p>
 </div>
 <div class="demo-panel">
+<div class="demo-map">
+<div id="parcelMap" role="application" aria-label="Parcel map. Click to add parcel corners."></div>
+<div class="map-bar">
+<span class="map-chip" id="mapInfo">Click the map to drop parcel corners</span>
+<button class="map-chip map-btn" id="mapUndo" disabled>Undo</button>
+<button class="map-chip map-btn" id="mapClear" disabled>Clear</button>
+</div>
+</div>
 <div class="demo-form">
 <div class="field">
 <label for="dLocation">County or address</label>
 <input id="dLocation" type="text" placeholder="e.g. Yolo County, CA" value="Yolo County, CA">
+<p class="demo-hint" style="margin-top:6px">Press Enter to jump the map there.</p>
 </div>
 <div class="field">
 <label for="dAcres">Acreage</label>
@@ -522,9 +561,14 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-
 <div class="memo-score"><div class="l">Freshwater</div><div class="v" id="mWater" style="color:var(--blue)">—</div><div class="range" id="mWaterR">—</div></div>
 <div class="memo-score"><div class="l">Housing</div><div class="v" id="mHouse" style="color:var(--clay)">—</div><div class="range" id="mHouseR">—</div></div>
 </div>
+<div class="memo-notes" id="mNotes" style="display:none"></div>
 <div class="memo-line"><span>Coordinates</span><span id="mSoil">—</span></div>
 <div class="memo-line"><span>Annual precipitation (est.)</span><span id="mVal">—</span></div>
-<div class="memo-line"><span>Nearest surface water</span><span id="mWaterTrend">—</span></div>
+<div class="memo-line"><span>Nearest stream/river</span><span id="mWaterTrend">—</span></div>
+<div class="memo-line"><span>Land cover</span><span id="mLand">—</span></div>
+<div class="memo-line"><span>Soil</span><span id="mSoilUnit">—</span></div>
+<div class="memo-line"><span>Farmland class</span><span id="mFarmClass">—</span></div>
+<div class="memo-line"><span>Capability class · slope</span><span id="mCap">—</span></div>
 <div class="memo-line"><span>FEMA flood zone</span><span id="mFlood">—</span></div>
 <div class="memo-line"><span>Generated in</span><span id="mTime">—</span></div>
 <div class="memo-sub" style="margin:22px 0 8px">Live data pulled for this scan</div>
@@ -651,7 +695,7 @@ async function getElevation(lat, lon){
 
 // ---- FEMA flood zone ----
 async function getFloodZone(lat, lon){
-  const baseUrl = 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHL/MapServer/28/query';
+  const baseUrl = 'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query';
   const params = new URLSearchParams({
     geometry: lon + ',' + lat,
     geometryType: 'esriGeometryPoint',
@@ -671,7 +715,27 @@ async function getFloodZone(lat, lon){
   return { zone: attrs.FLD_ZONE || 'X', subtype: attrs.ZONE_SUBTY || '' };
 }
 
-// ---- Distance to nearest surface water (Overpass / OpenStreetMap) ----
+// ---- Distance to nearest stream/river (USGS National Hydrography Dataset) ----
+// Overpass/OSM proved unreliable (frequent 406/504s), so water now comes from
+// USGS NHD — the federal stream & river map. We pull flowlines within
+// WATER_SEARCH_KM and measure the true distance to the closest line segment.
+const WATER_SEARCH_KM = 6;
+
+// fetch() with a time limit, so one slow government server can't stall the whole scan.
+async function fetchWithTimeout(url, ms, tries, init){
+  for(let attempt = 1; ; attempt++){
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    try {
+      return await fetch(url, Object.assign({}, init, { signal: ctrl.signal }));
+    } catch(err){
+      if(attempt >= (tries || 1)) throw new Error(err.name === 'AbortError' ? 'timed out' : err.message);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+}
+
 function haversineKm(lat1, lon1, lat2, lon2){
   const R = 6371;
   const dLat = (lat2-lat1) * Math.PI/180;
@@ -680,102 +744,388 @@ function haversineKm(lat1, lon1, lat2, lon2){
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-async function getNearestWaterKm(lat, lon){
-  const query = '[out:json][timeout:20];(way["natural"="water"](around:6000,' + lat + ',' + lon + ');' +
-    'way["waterway"](around:6000,' + lat + ',' + lon + ');' +
-    'node["natural"="water"](around:6000,' + lat + ',' + lon + '););out center 8;';
-  const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query });
-  if(!res.ok) throw new Error('water lookup failed (' + res.status + ')');
-  const data = await res.json();
-  if(!data.elements || !data.elements.length) return { nearestKm: null };
-  let min = Infinity;
-  data.elements.forEach(el => {
-    const elat = el.lat !== undefined ? el.lat : (el.center ? el.center.lat : null);
-    const elon = el.lon !== undefined ? el.lon : (el.center ? el.center.lon : null);
-    if(elat === null || elon === null) return;
-    const d = haversineKm(lat, lon, elat, elon);
-    if(d < min) min = d;
-  });
-  return { nearestKm: isFinite(min) ? Math.round(min*10)/10 : null };
+// Distance (km) from a point to a segment, on a flat projection centered on the point.
+function pointToSegmentKm(lat, lon, a, b){
+  const kx = 111.32 * Math.cos(lat*Math.PI/180), ky = 110.57;
+  const ax = (a[0]-lon)*kx, ay = (a[1]-lat)*ky, bx = (b[0]-lon)*kx, by = (b[1]-lat)*ky;
+  const dx = bx-ax, dy = by-ay, len2 = dx*dx + dy*dy;
+  const t = len2 ? Math.max(0, Math.min(1, -(ax*dx + ay*dy) / len2)) : 0;
+  return Math.hypot(ax + t*dx, ay + t*dy);
 }
 
-// ---- Nearby land use context (Overpass / OpenStreetMap) ----
-async function getLanduseContext(lat, lon){
-  const query = '[out:json][timeout:20];(way["landuse"](around:600,' + lat + ',' + lon + '););out tags 20;';
-  const res = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: query });
-  if(!res.ok) throw new Error('landuse lookup failed (' + res.status + ')');
+async function getNearestWaterKm(lat, lon){
+  const params = new URLSearchParams({
+    geometry: lon + ',' + lat,
+    geometryType: 'esriGeometryPoint',
+    inSR: '4326',
+    distance: String(WATER_SEARCH_KM * 1000),
+    units: 'esriSRUnit_Meter',
+    spatialRel: 'esriSpatialRelIntersects',
+    where: 'ftype IN (460,558)',   // 460 = stream/river, 558 = path through lakes & wide rivers
+    outFields: 'gnis_name',
+    returnGeometry: 'true',
+    outSR: '4326',
+    geometryPrecision: '5',
+    maxAllowableOffset: '0.0002',  // simplify lines (~20 m) to keep the response small
+    f: 'json'
+  });
+  // USGS sometimes hangs for a minute, then answers instantly on retry — so: 9s limit, 2 tries.
+  const res = await fetchWithTimeout('https://hydro.nationalmap.gov/arcgis/rest/services/nhd/MapServer/6/query?' + params.toString(), 9000, 2);
+  if(!res.ok) throw new Error('water lookup failed (' + res.status + ')');
   const data = await res.json();
+  if(data.error) throw new Error('water lookup failed (' + data.error.message + ')');
+  let min = Infinity, name = null;
+  (data.features || []).forEach(f => {
+    ((f.geometry && f.geometry.paths) || []).forEach(path => {
+      for(let i = 0; i < path.length - 1; i++){
+        const d = pointToSegmentKm(lat, lon, path[i], path[i+1]);
+        if(d < min){ min = d; name = f.attributes.gnis_name || f.attributes.GNIS_NAME || null; }
+      }
+    });
+  });
+  if(!isFinite(min)) return { nearestKm: null, beyondKm: WATER_SEARCH_KM, name: null };
+  return { nearestKm: Math.round(min*10)/10, name };
+}
+
+// ---- Land cover (USGS/MRLC National Land Cover Database) ----
+// NLCD classifies every 30 m pixel in the lower 48. We sample several points
+// across the parcel and take the most common class. `dominant` uses the same
+// vocabulary the scoring functions below already expect.
+const NLCD_CLASSES = {
+  11: ['Open water', 'water'],
+  12: ['Perennial ice/snow', 'barren'],
+  21: ['Developed, open space', 'residential'],
+  22: ['Developed, low intensity', 'residential'],
+  23: ['Developed, medium intensity', 'commercial'],
+  24: ['Developed, high intensity', 'industrial'],
+  31: ['Barren land', 'barren'],
+  41: ['Deciduous forest', 'forest'],
+  42: ['Evergreen forest', 'forest'],
+  43: ['Mixed forest', 'forest'],
+  52: ['Shrub/scrub', 'scrub'],
+  71: ['Grassland/herbaceous', 'grassland'],
+  81: ['Pasture/hay', 'meadow'],
+  82: ['Cultivated crops', 'farmland'],
+  90: ['Woody wetlands', 'wetland'],
+  95: ['Emergent herbaceous wetlands', 'wetland']
+};
+
+async function getNlcdClass(lat, lon){
+  const d = 0.0002; // tiny bbox around the point; we ask for its center pixel
+  const params = new URLSearchParams({
+    service: 'WMS', version: '1.1.1', request: 'GetFeatureInfo',
+    layers: 'NLCD_2021_Land_Cover_L48', query_layers: 'NLCD_2021_Land_Cover_L48',
+    srs: 'EPSG:4326', bbox: [lon-d, lat-d, lon+d, lat+d].join(','),
+    width: '3', height: '3', x: '1', y: '1', info_format: 'application/json'
+  });
+  const res = await fetchWithTimeout('https://www.mrlc.gov/geoserver/mrlc_display/NLCD_2021_Land_Cover_L48/wms?' + params.toString(), 10000, 2);
+  if(!res.ok) throw new Error('land cover lookup failed (' + res.status + ')');
+  const data = await res.json();
+  const f = data.features && data.features[0];
+  return f && f.properties ? f.properties.PALETTE_INDEX : null;
+}
+
+async function getLanduseContext(lat, lon, samplePoints){
+  const pts = (samplePoints && samplePoints.length) ? samplePoints : [{ lat, lon }];
+  const results = await Promise.allSettled(pts.map(p => getNlcdClass(p.lat, p.lon)));
   const counts = {};
-  (data.elements || []).forEach(el => {
-    const lu = el.tags && el.tags.landuse;
-    if(lu) counts[lu] = (counts[lu] || 0) + 1;
+  results.forEach(r => {
+    if(r.status === 'fulfilled' && NLCD_CLASSES[r.value]) counts[r.value] = (counts[r.value] || 0) + 1;
   });
   const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-  return { dominant: sorted.length ? sorted[0][0] : null, all: counts };
+  if(!sorted.length) throw new Error('no land cover data (NLCD covers the lower 48 only)');
+  const [code, n] = sorted[0];
+  const [label, dominant] = NLCD_CLASSES[code];
+  return { dominant, label, share: Math.round(n / pts.length * 100), samples: pts.length, all: counts };
+}
+
+// ---- Soil (USDA NRCS soil survey, SSURGO, via Soil Data Access) ----
+// For each sample point we get the soil map unit and its major components,
+// then weight each component by its share of the map unit. This gives us
+// the three things that matter most for farmland and building:
+//   - land capability class (1 = best cropland ... 8 = unusable). We use the
+//     better of the irrigated and dryland ratings: arid-West farmland is class 1
+//     irrigated but class 4 dry, and water availability is the Freshwater lens's job.
+//   - official farmland classification (prime, statewide importance, ...)
+//   - typical slope (%)
+async function getSoil(points){
+  const pts = points.slice(0, 9);
+  const sql = 'SELECT p.pt, mu.muname, mu.farmlndcl, c.comppct_r, c.nirrcapcl, c.irrcapcl, c.slope_r FROM (' +
+    pts.map((p, i) => 'SELECT ' + i + " AS pt, mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('point(" +
+      p.lon.toFixed(6) + ' ' + p.lat.toFixed(6) + ")')").join(' UNION ALL ') +
+    ") p JOIN mapunit mu ON mu.mukey = p.mukey JOIN component c ON c.mukey = mu.mukey WHERE c.majcompflag = 'Yes'";
+  const res = await fetchWithTimeout('https://sdmdataaccess.sc.egov.usda.gov/Tabular/post.rest', 15000, 2, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ format: 'JSON+COLUMNNAME', query: sql })
+  });
+  if(!res.ok) throw new Error('soil lookup failed (' + res.status + ')');
+  const data = await res.json();
+  const rows = (data.Table || []).slice(1); // first row is column names
+  if(!rows.length) throw new Error('no soil survey data at this location');
+
+  // Group components by sample point.
+  const byPt = {};
+  const num = v => (v === null || v === '' || isNaN(parseFloat(v))) ? null : parseFloat(v);
+  rows.forEach(([pt, muname, farmlndcl, pct, dryCap, irrCap, slope]) => {
+    const caps = [num(dryCap), num(irrCap)].filter(x => x !== null);
+    (byPt[pt] = byPt[pt] || { muname, farmlndcl, comps: [] }).comps.push({
+      pct: num(pct) || 0, cap: caps.length ? Math.min(...caps) : null, slope: num(slope)
+    });
+  });
+  const weighted = (comps, key) => {
+    const have = comps.filter(c => c[key] !== null && !isNaN(c[key]) && c.pct > 0);
+    const w = have.reduce((a,c) => a + c.pct, 0);
+    return w ? have.reduce((a,c) => a + c[key]*c.pct, 0) / w : null;
+  };
+  const perPt = Object.values(byPt).map(p => ({
+    muname: p.muname, farmlndcl: p.farmlndcl,
+    cap: weighted(p.comps, 'cap'), slope: weighted(p.comps, 'slope'), classScore: farmClassScore(p.farmlndcl)
+  }));
+  const avg = key => {
+    const v = perPt.map(p => p[key]).filter(x => x !== null);
+    return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null;
+  };
+  const mode = key => {
+    const counts = {};
+    perPt.forEach(p => { if(p[key]) counts[p[key]] = (counts[p[key]] || 0) + 1; });
+    const top = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+    return top ? { value: top[0], n: top[1] } : { value: null, n: 0 };
+  };
+  const unit = mode('muname');
+  return {
+    capClass: avg('cap'),
+    slopePct: avg('slope'),
+    farmClassScore: avg('classScore'),
+    farmClass: mode('farmlndcl').value,
+    mapUnit: unit.value,
+    share: Math.round(unit.n / pts.length * 100),
+    samples: pts.length
+  };
+}
+
+function farmClassScore(fc){
+  if(!fc) return null;
+  const s = fc.toLowerCase();
+  if(s.startsWith('all areas are prime')) return 95;
+  if(s.startsWith('prime farmland if')) return 78;   // prime only if irrigated / drained / protected
+  if(s.includes('statewide')) return 68;
+  if(s.includes('unique') || s.includes('local')) return 60;
+  if(s.startsWith('not prime')) return 22;
+  return 50;
 }
 
 /* ============================================================
    SCORING — the judgment layer. These weights and thresholds
    are a starting point, not gospel. This is exactly the logic
    you should refine based on your own underwriting experience.
+
+   Each lens is a weighted blend of named parts. If a data source
+   fails, its part is LEFT OUT (not filled with a made-up value),
+   the remaining parts are re-weighted, and the lens is flagged
+   as partial with a wider range.
    ============================================================ */
 
 function triangularScore(value, low, idealLow, idealHigh, high){
-  if(value === null || value === undefined) return 50;
+  if(value === null || value === undefined) return null;
   if(value <= low || value >= high) return 15;
   if(value >= idealLow && value <= idealHigh) return 95;
   if(value < idealLow) return 15 + (value-low)/(idealLow-low) * 80;
   return 95 - (value-idealHigh)/(high-idealHigh) * 80;
 }
 
-function scoreFarmland({ precipMm, elevationM, landuse }){
-  const precipScore = triangularScore(precipMm, 50, 380, 900, 1600);
-  const elevScore = triangularScore(elevationM, -50, 0, 1200, 2800);
-  let bonus = 0;
-  const good = ['farmland','orchard','vineyard','meadow','allotments','greenhouse_horticulture'];
-  const bad = ['residential','industrial','commercial','retail'];
-  if(landuse && landuse.dominant){
-    if(good.includes(landuse.dominant)) bonus = 12;
-    else if(bad.includes(landuse.dominant)) bonus = -12;
+// Straight-line interpolation through [x, score] points.
+function curve(value, points){
+  if(value === null || value === undefined || isNaN(value)) return null;
+  if(value <= points[0][0]) return points[0][1];
+  for(let i = 1; i < points.length; i++){
+    const [x0,y0] = points[i-1], [x1,y1] = points[i];
+    if(value <= x1) return y0 + (value-x0)/(x1-x0) * (y1-y0);
   }
-  const raw = precipScore*0.5 + elevScore*0.3 + (50+bonus)*0.2;
-  return Math.max(1, Math.min(99, Math.round(raw)));
+  return points[points.length-1][1];
 }
 
-function scoreFreshwater({ precipMm, waterKm }){
-  const precipScore = triangularScore(precipMm, 50, 300, 1100, 1800);
-  let waterScore;
-  if(waterKm === null || waterKm === undefined) waterScore = 40;
-  else if(waterKm < 1) waterScore = 95;
-  else if(waterKm < 3) waterScore = 80;
-  else if(waterKm < 6) waterScore = 60;
-  else if(waterKm < 10) waterScore = 42;
-  else waterScore = 25;
-  const raw = precipScore*0.45 + waterScore*0.55;
-  return Math.max(1, Math.min(99, Math.round(raw)));
+// How suitable each land-cover type is for each lens (0-100).
+const COVER_FARM  = { farmland:92, meadow:85, grassland:62, scrub:42, barren:20, forest:25, wetland:12, water:3, residential:15, commercial:8, industrial:5 };
+const COVER_HOUSE = { residential:88, commercial:75, industrial:60, grassland:62, scrub:58, barren:55, meadow:50, farmland:45, forest:32, wetland:8, water:3 };
+
+// Average over every sampled pixel, so a half-forest parcel scores as half-forest.
+function coverScore(landuse, table){
+  if(!landuse || !landuse.all) return null;
+  let sum = 0, n = 0;
+  Object.entries(landuse.all).forEach(([code, count]) => {
+    const key = NLCD_CLASSES[code] && NLCD_CLASSES[code][1];
+    if(key in table){ sum += table[key] * count; n += count; }
+  });
+  return n ? sum / n : null;
 }
 
-function scoreHousing({ floodZone, elevationM, landuse }){
-  const zoneScores = { X:95, D:70, AE:45, A:40, AH:42, AO:42, VE:20, V:22 };
-  const floodScore = zoneScores[floodZone && floodZone.zone] !== undefined ? zoneScores[floodZone.zone] : 55;
-  const elevScore = triangularScore(elevationM, -50, 0, 900, 2500);
-  let luScore = 55;
-  if(landuse && landuse.dominant){
-    if(['residential','commercial','retail'].includes(landuse.dominant)) luScore = 78;
-    else if(['farmland','forest','conservation','military'].includes(landuse.dominant)) luScore = 35;
+// `limits` are deal-breakers: a great average can't hide one fatal factor
+// (e.g. 40% slopes for housing). Each limit caps the score at `max`.
+function combine(parts, limits){
+  const total = parts.reduce((a,p) => a + p.weight, 0);
+  const have = parts.filter(p => p.score !== null && p.score !== undefined && !isNaN(p.score));
+  const w = have.reduce((a,p) => a + p.weight, 0);
+  const missing = parts.filter(p => !have.includes(p)).map(p => p.name);
+  if(w / total < 0.5) return { score: null, coverage: w / total, missing }; // under half the inputs: too little to say anything
+  let raw = have.reduce((a,p) => a + p.score * p.weight, 0) / w;
+  let cappedBy = null;
+  (limits || []).forEach(l => {
+    if(l.max !== null && l.max !== undefined && !isNaN(l.max) && l.max < raw){ raw = l.max; cappedBy = l.name; }
+  });
+  return { score: Math.max(1, Math.min(99, Math.round(raw))), coverage: w / total, missing, cappedBy };
+}
+
+const FLOOD_SCORES = { X:95, D:70, AE:45, A:40, AH:42, AO:42, AR:50, A99:55, VE:20, V:22 };
+
+// ---- Use profiles: "Primary use today" changes what good farmland means ----
+// Each profile swaps the curves and weights the Farmland lens uses, and says
+// which lens the memo should lead with and what land cover we'd expect to see.
+const USE_PROFILES = {
+  'Row crop': {
+    focus: 'farm',
+    expect: ['farmland'],
+    expectLabel: 'cultivated crops',
+    capCurve:   [[1,98],[2,88],[3,72],[4,55],[5,38],[6,25],[7,12],[8,4]],
+    slopeCurve: [[0,95],[2,95],[5,88],[8,72],[15,45],[25,20],[40,6]],
+    cover: COVER_FARM,
+    rain: [50, 380, 900, 1600],
+    elev: [-50, 0, 1200, 2800],
+    w: { cap: 0.30, cls: 0.15, slope: 0.15, cover: 0.20, rain: 0.12, elev: 0.08, water: 0 },
+    freshwater: { rain: 0.45, stream: 0.55 }
+  },
+  // Orchards & vineyards: fine on 5-15% hillsides, but trees can't skip a dry
+  // year (water weighs more) and blossoms are exposed to late frost (elevation).
+  'Orchard / permanent crop': {
+    focus: 'farm',
+    expect: ['farmland', 'scrub'],
+    expectLabel: 'crops or orchard',
+    capCurve:   [[1,96],[2,92],[3,84],[4,70],[5,45],[6,30],[7,14],[8,4]],
+    slopeCurve: [[0,90],[2,95],[8,92],[15,75],[25,40],[35,15],[45,5]],
+    cover: COVER_FARM,
+    rain: [50, 380, 900, 1600],
+    elev: [-50, 0, 800, 2000],
+    w: { cap: 0.25, cls: 0.10, slope: 0.12, cover: 0.18, rain: 0.10, elev: 0.10, water: 0.15 },
+    freshwater: { rain: 0.35, stream: 0.65 }
+  },
+  // Grazing: class 5-6 soils and steeper ground are normal rangeland, and the
+  // "prime farmland" label matters much less.
+  'Pasture / grazing': {
+    focus: 'farm',
+    expect: ['meadow', 'grassland', 'scrub'],
+    expectLabel: 'pasture or grassland',
+    capCurve:   [[1,95],[3,93],[4,86],[5,76],[6,66],[7,35],[8,8]],
+    slopeCurve: [[0,92],[15,90],[25,72],[35,45],[50,15]],
+    cover: { meadow:95, grassland:92, farmland:80, scrub:68, forest:40, barren:25, wetland:30, water:3, residential:15, commercial:8, industrial:5 },
+    rain: [50, 250, 1000, 1800],
+    elev: [-50, 0, 2000, 3200],
+    w: { cap: 0.25, cls: 0.05, slope: 0.15, cover: 0.25, rain: 0.20, elev: 0.10, water: 0 },
+    freshwater: { rain: 0.45, stream: 0.55 }
+  },
+  // Vacant: what's on the ground today shouldn't count for or against its
+  // farm potential (it's only used to catch pavement), and Housing leads.
+  'Vacant / undeveloped': {
+    focus: 'house',
+    expect: ['grassland', 'scrub', 'barren', 'forest'],
+    expectLabel: 'undeveloped land',
+    capCurve:   [[1,98],[2,88],[3,72],[4,55],[5,38],[6,25],[7,12],[8,4]],
+    slopeCurve: [[0,95],[2,95],[5,88],[8,72],[15,45],[25,20],[40,6]],
+    cover: COVER_FARM,
+    rain: [50, 380, 900, 1600],
+    elev: [-50, 0, 1200, 2800],
+    w: { cap: 0.36, cls: 0.18, slope: 0.18, cover: 0, rain: 0.17, elev: 0.11, water: 0 },
+    freshwater: { rain: 0.45, stream: 0.55 }
   }
-  const raw = floodScore*0.45 + elevScore*0.25 + luScore*0.30;
-  return Math.max(1, Math.min(99, Math.round(raw)));
+};
+
+function useProfile(use){ return USE_PROFILES[use] || USE_PROFILES['Row crop']; }
+
+const STREAM_CURVE = [[0,95],[1,95],[3,80],[6,60],[10,42],[15,25]];
+
+function scoreFarmland({ soil, landuse, precipMm, elevationM, waterKm, use }){
+  const P = useProfile(use);
+  const capScore = soil && curve(soil.capClass, P.capCurve);
+  const cover = coverScore(landuse, P.cover);
+  const parts = [
+    { name: 'soil capability', weight: P.w.cap,   score: capScore },
+    { name: 'farmland class',  weight: P.w.cls,   score: soil && soil.farmClassScore },
+    { name: 'slope',           weight: P.w.slope, score: soil && curve(soil.slopePct, P.slopeCurve) },
+    { name: 'land cover',      weight: P.w.cover, score: cover },
+    { name: 'rainfall',        weight: P.w.rain,  score: triangularScore(precipMm, ...P.rain) },
+    { name: 'elevation',       weight: P.w.elev,  score: triangularScore(elevationM, ...P.elev) },
+    { name: 'water access',    weight: P.w.water, score: curve(waterKm, STREAM_CURVE) }
+  ].filter(p => p.weight > 0);
+  return combine(parts, [
+    // Good rain can't make unusable soil productive.
+    { name: 'soil capability', max: capScore === null ? null : capScore + 20 },
+    // Prime soil under pavement or a lake isn't farmland, whatever the stated use.
+    { name: 'land cover', max: cover === null ? null : cover + 40 }
+  ]);
+}
+
+function scoreFreshwater({ precipMm, waterKm, use }){
+  const w = useProfile(use).freshwater;
+  return combine([
+    { name: 'rainfall',        weight: w.rain,   score: triangularScore(precipMm, 50, 300, 1100, 1800) },
+    { name: 'stream distance', weight: w.stream, score: curve(waterKm, STREAM_CURVE) }
+  ]);
+}
+
+// Plain-language flags for the memo: a stated use that the land cover
+// contradicts, and use-specific risks.
+function useNotes({ use, landuse, elevationM }){
+  const P = useProfile(use), notes = [];
+  if(landuse && landuse.dominant && landuse.share >= 50 && !P.expect.includes(landuse.dominant)){
+    notes.push('Check: you said "' + use + '", but land cover is mostly ' + landuse.label.toLowerCase() +
+      ' (' + landuse.share + '% of points), not ' + P.expectLabel + '.');
+  }
+  if(use === 'Orchard / permanent crop' && elevationM !== null && elevationM > 1000){
+    notes.push('Frost risk: at ' + Math.round(elevationM).toLocaleString() + ' m, late spring frosts can damage blossoms. Check local frost dates.');
+  }
+  if(use === 'Vacant / undeveloped'){
+    notes.push('Vacant land: Farmland is scored on soil, slope and climate only. Current land cover is used just to catch pavement.');
+  }
+  return notes;
+}
+
+function scoreHousing({ floodZone, soil, landuse, elevationM }){
+  const flood = floodZone ? (FLOOD_SCORES[floodZone.zone] !== undefined ? FLOOD_SCORES[floodZone.zone] : 55) : null;
+  const slopeScore = soil && curve(soil.slopePct, [[0,88],[3,95],[8,85],[12,68],[18,42],[25,22],[35,10],[50,4]]);
+  return combine([
+    { name: 'flood zone',  weight: 0.30, score: flood },
+    { name: 'slope',       weight: 0.30, score: slopeScore },
+    { name: 'land cover',  weight: 0.25, score: coverScore(landuse, COVER_HOUSE) },
+    { name: 'elevation',   weight: 0.15, score: triangularScore(elevationM, -50, 0, 900, 2500) }
+  ], [
+    { name: 'slope',      max: slopeScore === null ? null : slopeScore + 25 },
+    { name: 'flood zone', max: flood === null ? null : flood + 30 },
+    { name: 'wetland/water cover', max: coverScore(landuse, COVER_HOUSE) === null ? null : coverScore(landuse, COVER_HOUSE) + 35 }
+  ]);
 }
 
 /* ============================================================
    WIRE IT INTO THE UI
    ============================================================ */
 
-function ciRange(score, spread){
-  const lo = Math.max(0, score - spread);
-  const hi = Math.min(100, score + spread);
-  return '±' + spread + ' · CI ' + lo + '–' + hi;
+// Range width = base + missing data + how mixed the parcel is.
+// These are judgment-based uncertainty bands, not statistical confidence intervals.
+function scoreSpread(result, mix){
+  return Math.round(4 + (1 - result.coverage) * 30 + mix * 14);
+}
+
+function renderScore(id, result, mix){
+  const v = document.getElementById(id), r = document.getElementById(id + 'R');
+  if(result.score === null){
+    v.textContent = '—';
+    r.innerHTML = '<span class="partial">not enough data</span>';
+    return;
+  }
+  const spread = scoreSpread(result, mix);
+  const lo = Math.max(0, result.score - spread), hi = Math.min(100, result.score + spread);
+  v.textContent = result.score;
+  r.innerHTML = '±' + spread + ' · range ' + lo + '–' + hi +
+    (result.cappedBy ? '<br><span class="partial">capped by ' + result.cappedBy + '</span>' : '') +
+    (result.missing.length ? '<br><span class="partial">partial · no ' + result.missing.join(', ') + '</span>' : '');
 }
 
 function renderSources(sources){
@@ -784,6 +1134,175 @@ function renderSources(sources){
     '<div class="src-row"><span>' + s.label + '</span><span class="' + (s.ok ? 'src-ok' : 'src-fail') + '">' +
     (s.ok ? '✓ ' + s.detail : '✗ unavailable') + '</span></div>'
   ).join('');
+}
+
+/* ============================================================
+   PARCEL MAP
+   ------------------------------------------------------------
+   Click to drop parcel corners. 1 corner = a single point;
+   3+ corners = a parcel polygon whose acreage we compute and
+   whose center we scan. There's no free nationwide parcel-
+   boundary dataset, so the user outlines the parcel by hand.
+   ============================================================ */
+
+const ACRE_M2 = 4046.8564224;
+const parcel = { corners: [], markers: [], shape: null, center: null };
+let parcelMap = null;
+let reverseTimer = null;
+
+function initParcelMap(){
+  if(typeof L === 'undefined'){
+    document.getElementById('mapInfo').textContent = 'Map failed to load — address search still works';
+    return;
+  }
+  parcelMap = L.map('parcelMap', { doubleClickZoom: false, scrollWheelZoom: false }).setView([38.68, -121.9], 11);
+  const esri = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+  const imagery = L.tileLayer(esri + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics'
+  });
+  // Transparent overlays so you can tell where you are on the imagery.
+  // zIndex keeps these above the imagery no matter which base layer is picked.
+  const roads = L.tileLayer(esri + 'Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, zIndex: 10 });
+  const places = L.tileLayer(esri + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, zIndex: 11 });
+  const satellite = L.layerGroup([imagery, roads, places]).addTo(parcelMap);
+  const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '© OpenStreetMap contributors'
+  });
+  L.control.layers({ 'Satellite + labels': satellite, 'Satellite only': imagery, 'Streets': streets }, null, { position: 'topright', autoZIndex: false }).addTo(parcelMap);
+  L.control.scale({ position: 'bottomright', imperial: true, metric: false }).addTo(parcelMap);
+  // Scroll-zoom only after the user engages with the map, so the page still scrolls normally.
+  parcelMap.on('focus click', () => parcelMap.scrollWheelZoom.enable());
+  parcelMap.on('click', e => addCorner(e.latlng));
+}
+
+function addCorner(latlng){
+  parcel.corners.push(latlng);
+  const m = L.marker(latlng, {
+    icon: L.divIcon({ className: '', html: '<div class="parcel-vertex"></div>', iconSize: [14,14], iconAnchor: [7,7] }),
+    draggable: true
+  }).addTo(parcelMap);
+  const idx = parcel.corners.length - 1;
+  m.on('drag', ev => { parcel.corners[idx] = ev.target.getLatLng(); redrawParcel(false); });
+  m.on('dragend', () => redrawParcel(true));
+  parcel.markers.push(m);
+  redrawParcel(true);
+}
+
+function clearParcel(){
+  parcel.markers.forEach(m => m.remove());
+  if(parcel.shape) parcel.shape.remove();
+  parcel.corners = []; parcel.markers = []; parcel.shape = null; parcel.center = null;
+  redrawParcel(false);
+}
+
+// Polygon area on a local flat projection — accurate to well under 1% at parcel scale.
+function polygonAreaM2(pts){
+  const lat0 = pts.reduce((a,p) => a + p.lat, 0) / pts.length * Math.PI/180;
+  const R = 6371008.8;
+  const xy = pts.map(p => [p.lng*Math.PI/180 * R * Math.cos(lat0), p.lat*Math.PI/180 * R]);
+  let sum = 0;
+  for(let i = 0; i < xy.length; i++){
+    const [x1,y1] = xy[i], [x2,y2] = xy[(i+1) % xy.length];
+    sum += x1*y2 - x2*y1;
+  }
+  return Math.abs(sum) / 2;
+}
+
+function redrawParcel(finalized){
+  const n = parcel.corners.length;
+  if(parcel.shape){ parcel.shape.remove(); parcel.shape = null; }
+  const style = { color: '#C9A227', weight: 2, fillColor: '#C9A227', fillOpacity: 0.18 };
+  if(n === 2) parcel.shape = L.polyline(parcel.corners, style).addTo(parcelMap);
+  if(n >= 3) parcel.shape = L.polygon(parcel.corners, style).addTo(parcelMap);
+
+  document.getElementById('mapUndo').disabled = n === 0;
+  document.getElementById('mapClear').disabled = n === 0;
+  const info = document.getElementById('mapInfo');
+
+  if(n === 0){
+    parcel.center = null;
+    info.textContent = 'Click the map to drop parcel corners';
+    return;
+  }
+  if(n >= 3){
+    const c = parcel.shape.getBounds().getCenter();
+    parcel.center = { lat: c.lat, lon: c.lng };
+    const acres = polygonAreaM2(parcel.corners) / ACRE_M2;
+    const acresText = acres < 10 ? acres.toFixed(1) : Math.round(acres).toLocaleString();
+    document.getElementById('dAcres').value = acresText;
+    info.innerHTML = 'Parcel: <strong>' + acresText + ' acres</strong> · ' + n + ' corners · drag to adjust';
+  } else {
+    parcel.center = { lat: parcel.corners[0].lat, lon: parcel.corners[0].lng };
+    info.innerHTML = n === 1
+      ? 'Point selected · add 2+ more corners to outline a parcel'
+      : 'Add 1+ more corner to close the parcel';
+  }
+  if(finalized) scheduleReverseGeocode();
+}
+
+// Fill the location field with a readable name for the selection.
+// Debounced so we respect Nominatim's ~1 request/sec policy.
+function scheduleReverseGeocode(){
+  clearTimeout(reverseTimer);
+  reverseTimer = setTimeout(async () => {
+    if(!parcel.center) return;
+    const { lat, lon } = parcel.center;
+    const input = document.getElementById('dLocation');
+    input.value = lat.toFixed(5) + ', ' + lon.toFixed(5);
+    try {
+      const url = 'https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&lat=' + lat + '&lon=' + lon;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'en-US' } });
+      if(!res.ok) return;
+      const data = await res.json();
+      const a = data.address || {};
+      const place = a.village || a.town || a.city || a.hamlet || a.township || '';
+      const name = [place, a.county, a.state].filter(Boolean).join(', ');
+      // Only overwrite if the selection hasn't changed while we waited.
+      if(name && parcel.center && parcel.center.lat === lat) input.value = 'Parcel near ' + name;
+    } catch(e){ /* keep coordinates as the label */ }
+  }, 900);
+}
+
+async function flyToAddress(){
+  const status = document.getElementById('scanStatus');
+  const q = document.getElementById('dLocation').value.trim();
+  if(!q || !parcelMap) return;
+  status.textContent = 'Finding ' + q + '...';
+  try {
+    const loc = await geocodeAddress(q);
+    clearParcel();
+    parcelMap.flyTo([loc.lat, loc.lon], 14);
+    status.textContent = 'Now click the map to outline the parcel.';
+  } catch(err){
+    status.textContent = 'Error: ' + err.message;
+  }
+}
+
+document.getElementById('mapUndo').addEventListener('click', () => {
+  if(!parcel.corners.length) return;
+  parcel.corners.pop();
+  parcel.markers.pop().remove();
+  redrawParcel(true);
+});
+document.getElementById('mapClear').addEventListener('click', clearParcel);
+document.getElementById('dLocation').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); flyToAddress(); }
+});
+// Typing a new address means the map selection no longer applies.
+document.getElementById('dLocation').addEventListener('input', () => { if(parcel.corners.length) clearParcel(); });
+
+initParcelMap();
+
+// Sample points for land cover: the center, plus points halfway to each corner.
+function parcelSamplePoints(){
+  if(!parcel.center || parcel.corners.length < 3) return null;
+  const c = parcel.center;
+  return [c].concat(parcel.corners.slice(0, 8).map(p => ({ lat: (c.lat + p.lat)/2, lon: (c.lon + p.lng)/2 })));
+}
+
+function waterText(w){
+  if(w.nearestKm === null) return 'none within ' + w.beyondKm + ' km';
+  return (w.nearestKm < 0.1 ? 'on parcel' : w.nearestKm + ' km away') + (w.name ? ' · ' + w.name : '');
 }
 
 document.getElementById('runScan').addEventListener('click', async function(){
@@ -796,20 +1315,33 @@ document.getElementById('runScan').addEventListener('click', async function(){
 
   btn.disabled = true;
   btn.textContent = 'Scanning...';
-  status.textContent = 'Geocoding location...';
+  status.textContent = parcel.center ? 'Using map selection...' : 'Geocoding location...';
 
   const sources = [];
 
   try {
-    const location = await geocodeAddress(locInput);
-    status.textContent = 'Pulling climate, flood, and land-use data...';
+    let location;
+    if(parcel.center){
+      location = { lat: parcel.center.lat, lon: parcel.center.lon,
+        displayName: parcel.corners.length >= 3 ? 'map parcel (' + parcel.corners.length + ' corners)' : 'map point' };
+    } else {
+      location = await geocodeAddress(locInput);
+      if(parcelMap){
+        parcelMap.flyTo([location.lat, location.lon], 13);
+        addCorner(L.latLng(location.lat, location.lon));
+        clearTimeout(reverseTimer); // keep the user's typed label
+      }
+    }
+    status.textContent = 'Pulling climate, flood, soil, and land-cover data...';
 
-    const [climateR, elevR, floodR, waterR, luR] = await Promise.allSettled([
+    const samples = parcelSamplePoints() || [{ lat: location.lat, lon: location.lon }];
+    const [climateR, elevR, floodR, waterR, luR, soilR] = await Promise.allSettled([
       getClimate(location.lat, location.lon),
       getElevation(location.lat, location.lon),
       getFloodZone(location.lat, location.lon),
       getNearestWaterKm(location.lat, location.lon),
-      getLanduseContext(location.lat, location.lon)
+      getLanduseContext(location.lat, location.lon, samples),
+      getSoil(samples)
     ]);
 
     const climate = climateR.status === 'fulfilled' ? climateR.value : null;
@@ -817,33 +1349,53 @@ document.getElementById('runScan').addEventListener('click', async function(){
     const flood = floodR.status === 'fulfilled' ? floodR.value : null;
     const water = waterR.status === 'fulfilled' ? waterR.value : null;
     const landuse = luR.status === 'fulfilled' ? luR.value : null;
+    const soil = soilR.status === 'fulfilled' ? soilR.value : null;
 
-    sources.push({ label: 'Geocoding (OpenStreetMap)', ok: true, detail: location.displayName.slice(0,40) });
+    sources.push({ label: parcel.corners.length && location.displayName.startsWith('map') ? 'Location (map selection)' : 'Geocoding (OpenStreetMap)', ok: true, detail: location.displayName.slice(0,40) });
     sources.push({ label: 'Climate — annual precip (Open-Meteo)', ok: !!climate, detail: climate ? climate.annualPrecipMm + ' mm/yr' : '' });
-    sources.push({ label: 'Elevation (Open-Elevation)', ok: !!elev, detail: elev ? elev.elevationM + ' m' : '' });
+    sources.push({ label: 'Elevation (Open-Elevation)', ok: !!elev, detail: elev ? Math.round(elev.elevationM) + ' m' : '' });
     sources.push({ label: 'FEMA flood zone', ok: !!flood, detail: flood ? 'Zone ' + flood.zone : '' });
-    sources.push({ label: 'Nearest surface water (OSM)', ok: !!(water && water.nearestKm !== null), detail: water && water.nearestKm !== null ? water.nearestKm + ' km' : '' });
-    sources.push({ label: 'Nearby land use (OSM)', ok: !!(landuse && landuse.dominant), detail: landuse && landuse.dominant ? landuse.dominant : '' });
+    sources.push({ label: 'Nearest stream/river (USGS NHD)', ok: !!water, detail: water ? waterText(water) : '' });
+    sources.push({ label: 'Land cover (NLCD 2021)', ok: !!landuse, detail: landuse ? landuse.label + ' · ' + landuse.share + '% of ' + landuse.samples + ' pts' : '' });
+    sources.push({ label: 'Soil survey (USDA SSURGO)', ok: !!soil, detail: soil ? (soil.mapUnit || '').split(',')[0].slice(0,28) + ' · ' + soil.share + '% of ' + soil.samples + ' pts' : '' });
 
     const precipMm = climate ? climate.annualPrecipMm : null;
     const elevationM = elev ? elev.elevationM : null;
-    const waterKm = water ? water.nearestKm : null;
+    // Nothing within the search radius is real data ("far from water"), not a failure.
+    const waterKm = water ? (water.nearestKm !== null ? water.nearestKm : water.beyondKm + 2) : null;
 
-    const farm = scoreFarmland({ precipMm, elevationM, landuse });
-    const freshwater = scoreFreshwater({ precipMm, waterKm });
-    const housing = scoreHousing({ floodZone: flood, elevationM, landuse });
+    const farm = scoreFarmland({ soil, landuse, precipMm, elevationM, waterKm, use });
+    const freshwater = scoreFreshwater({ precipMm, waterKm, use });
+    const housing = scoreHousing({ floodZone: flood, soil, landuse, elevationM });
+
+    // How mixed is the parcel? 0 = uniform, ~0.8 = very mixed. A single point
+    // tells us nothing about the rest of the parcel, so treat it as moderately unknown.
+    const shares = [landuse && landuse.share, soil && soil.share].filter(x => x !== null && x !== undefined);
+    const mix = samples.length <= 1 ? 0.35 : (shares.length ? 1 - shares.reduce((a,b) => a+b, 0) / shares.length / 100 : 0.35);
 
     document.getElementById('mTitle').textContent = locInput;
     document.getElementById('mSub').textContent = acres + ' acres · ' + use + ' · live scan';
-    document.getElementById('mFarm').textContent = farm;
-    document.getElementById('mWater').textContent = freshwater;
-    document.getElementById('mHouse').textContent = housing;
-    document.getElementById('mFarmR').textContent = ciRange(farm, 6);
-    document.getElementById('mWaterR').textContent = ciRange(freshwater, 8);
-    document.getElementById('mHouseR').textContent = ciRange(housing, 9);
+    renderScore('mFarm', farm, mix);
+    renderScore('mWater', freshwater, 0); // rainfall & stream distance don't vary much across one parcel
+    renderScore('mHouse', housing, mix);
+
+    // Lead with the lens that matters for this use, and show any flags.
+    const focus = useProfile(use).focus;
+    document.getElementById('mFarm').parentElement.classList.toggle('focus', focus === 'farm');
+    document.getElementById('mHouse').parentElement.classList.toggle('focus', focus === 'house');
+    const notes = useNotes({ use, landuse, elevationM });
+    const notesEl = document.getElementById('mNotes');
+    notesEl.innerHTML = notes.map(n => '<div class="memo-note">' + n.replace(/</g, '&lt;') + '</div>').join('');
+    notesEl.style.display = notes.length ? 'block' : 'none';
     document.getElementById('mSoil').textContent = location.lat.toFixed(4) + ', ' + location.lon.toFixed(4);
     document.getElementById('mVal').textContent = precipMm !== null ? precipMm + ' mm' : 'unavailable';
-    document.getElementById('mWaterTrend').textContent = waterKm !== null ? waterKm + ' km away' : 'unavailable';
+    document.getElementById('mWaterTrend').textContent = water ? waterText(water) : 'unavailable';
+    document.getElementById('mLand').textContent = landuse ? landuse.label + (landuse.share < 100 ? ' (' + landuse.share + '%, mixed)' : '') : 'unavailable';
+    document.getElementById('mSoilUnit').textContent = soil && soil.mapUnit ? soil.mapUnit : 'unavailable';
+    document.getElementById('mFarmClass').textContent = soil && soil.farmClass ? soil.farmClass : 'unavailable';
+    document.getElementById('mCap').textContent = soil && soil.capClass !== null
+      ? 'Class ' + soil.capClass.toFixed(1) + ' · ' + (soil.slopePct !== null ? Math.round(soil.slopePct) + '% slope' : 'slope n/a')
+      : 'unavailable';
     document.getElementById('mFlood').textContent = flood ? ('Zone ' + flood.zone + (flood.subtype ? ' — ' + flood.subtype : '')) : 'unavailable';
     document.getElementById('mTime').textContent = ((Date.now()-t0)/1000).toFixed(1) + 's';
 
