@@ -1,0 +1,15 @@
+{
+  "name": "canopy",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Canopy land screening prototype: parcel scan, deal calculator and agricultural lease screen.",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "node --test tests/lease-core.test.js",
+    "test:browser": "python3 tests/browser_check.py",
+    "data:land": "node scripts/fetch_land_values.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

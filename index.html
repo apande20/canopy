@@ -324,9 +324,44 @@ padding:7px 11px;border-radius:2px;backdrop-filter:blur(6px);
 .leaflet-control-layers-expanded{color:var(--ink)}
 .leaflet-control-attribution{background:rgba(18,20,15,0.75) !important;color:var(--ink-faint) !important}
 .leaflet-control-attribution a{color:var(--ink-dim) !important}
+
+/* Canopy Underwriter MVP — new financial calculator */
+.underwrite-section{background:linear-gradient(180deg,rgba(201,162,39,.035),transparent 70%)}
+.uw-shell{border:1px solid var(--line);background:var(--bg-raised);border-radius:4px;overflow:hidden}
+.uw-topline{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.uw-topline p{color:var(--ink-dim);font-size:13px;max-width:660px}
+.uw-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.9fr)}
+@media(max-width:900px){.uw-grid{grid-template-columns:1fr}}
+.uw-inputs{padding:24px;border-right:1px solid var(--line)}
+@media(max-width:900px){.uw-inputs{border-right:0;border-bottom:1px solid var(--line)}}
+.uw-inputs h3,.uw-results h3{font-size:20px;margin-bottom:18px}
+.uw-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.uw-fields{grid-template-columns:1fr}}
+.uw-field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+.uw-field input,.uw-field select{width:100%;min-width:0;background:var(--bg-panel);border:1px solid var(--line-strong);color:var(--ink);padding:10px 11px;border-radius:2px;font:14px var(--sans)}
+.uw-field input:focus{outline:1px solid var(--gold);border-color:var(--gold)}
+.uw-note{font-size:11.5px;color:var(--ink-faint);margin-top:14px;line-height:1.6}
+.uw-results{padding:24px}
+.uw-kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.uw-kpi{padding:14px;background:var(--bg-panel);border:1px solid var(--line);border-radius:3px;min-width:0}
+.uw-kpi .k{font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint)}
+.uw-kpi .v{font-family:var(--serif);font-size:clamp(20px,2.5vw,29px);line-height:1.25;margin-top:7px;overflow-wrap:anywhere}
+.uw-kpi .s{font-size:11px;color:var(--ink-faint);margin-top:4px}
+.uw-scenarios{width:100%;border-collapse:collapse;margin-top:22px;font-size:12px}
+.uw-scenarios th,.uw-scenarios td{text-align:right;padding:10px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.uw-scenarios th:first-child,.uw-scenarios td:first-child{text-align:left}
+.uw-scenarios th{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;color:var(--ink-faint);font-weight:400}
+.uw-callout{margin-top:16px;padding:12px 14px;border-left:2px solid var(--gold);background:var(--gold-dim);font-size:12px;color:var(--ink-dim)}
+.uw-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.uw-actions button{background:transparent;border:1px solid var(--line-strong);color:var(--ink);font:12px var(--mono);padding:10px 12px;cursor:pointer}
+.uw-actions button:hover{border-color:var(--gold);color:var(--gold)}
+.uw-status{font:11px var(--mono);color:var(--ink-faint);margin-top:12px}
+
 </style>
+<link rel="stylesheet" href="lease.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="land_values.js"></script>
 </head>
 <body>
 <header>
@@ -337,6 +372,8 @@ padding:7px 11px;border-radius:2px;backdrop-filter:blur(6px);
 <a href="#comps">Comps</a>
 <a href="#how">How it works</a>
 <a href="#demo">Demo</a>
+<a href="#underwrite">Underwrite</a>
+<a href="#lease">Lease screen</a>
 <a href="#contact">Contact</a>
 </div>
 <a href="#demo" class="nav-cta">Run a parcel</a>
@@ -347,8 +384,8 @@ padding:7px 11px;border-radius:2px;backdrop-filter:blur(6px);
 <div class="wrap hero-grid">
 <div>
 <span class="eyebrow">AI farmland intelligence</span>
-<h1>Underwriting compressed from <em>three weeks</em> to four minutes.</h1>
-<p class="lede">Canopy scores any US parcel across farmland viability, freshwater access, and housing feasibility, then writes the memo. Built for lenders, funds, and land buyers who move on tighter timelines than their diligence allows.</p>
+<h1>Land screening and deal math, in one <em>clearer workflow</em>.</h1>
+<p class="lede">Canopy combines early parcel screening with a transparent, assumption-driven deal calculator. It helps small land investors identify questions, test scenarios, and decide what to verify next.</p>
 <div class="hero-actions">
 <a href="#demo" class="btn btn-primary">Run a parcel scan →</a>
 <a href="#lenses" class="btn btn-ghost">See how scoring works</a>
@@ -422,7 +459,7 @@ padding:7px 11px;border-radius:2px;backdrop-filter:blur(6px);
 <li>FEMA flood zone rating</li>
 <li>Elevation and terrain</li>
 <li>Nearby land use context</li>
-<li>Utility and grid access</li>
+<li>Existing structures and nearby buildings</li>
 <li>Achievable density</li>
 <li>Nearby comparable sales</li>
 </ul>
@@ -546,10 +583,12 @@ padding:7px 11px;border-radius:2px;backdrop-filter:blur(6px);
 <option>Orchard / permanent crop</option>
 <option>Pasture / grazing</option>
 <option>Vacant / undeveloped</option>
+<option>Residential / homesite</option>
 </select>
 </div>
 <button class="demo-btn" id="runScan">Generate memo →</button>
 <p class="demo-hint" id="scanStatus">Queries live public APIs — first run can take 10-15 seconds.</p>
+<a class="ls-entry" href="#lease">Agricultural lease screen</a>
 </div>
 <div class="demo-out">
 <div class="demo-empty" id="demoEmpty">Fill in a parcel and generate a memo to see it here.</div>
@@ -570,12 +609,130 @@ padding:7px 11px;border-radius:2px;backdrop-filter:blur(6px);
 <div class="memo-line"><span>Farmland class</span><span id="mFarmClass">—</span></div>
 <div class="memo-line"><span>Capability class · slope</span><span id="mCap">—</span></div>
 <div class="memo-line"><span>FEMA flood zone</span><span id="mFlood">—</span></div>
+<div class="memo-line"><span>Existing structures</span><span id="mStruct">—</span></div>
+<div class="memo-line"><span>Buildings within 1 km</span><span id="mNearby">—</span></div>
+<div class="memo-line"><span>County land value</span><span id="mCountyVal">—</span></div>
+<div class="memo-line"><span>County benchmark</span><span id="mBench">—</span></div>
+<div class="memo-line"><span>County cash rent</span><span id="mRent">—</span></div>
 <div class="memo-line"><span>Generated in</span><span id="mTime">—</span></div>
 <div class="memo-sub" style="margin:22px 0 8px">Live data pulled for this scan</div>
 <div id="mComps"></div>
 </div>
 </div>
 </div>
+</div>
+</section>
+
+
+<section id="underwrite" class="underwrite-section">
+<div class="wrap">
+  <div class="section-head">
+    <span class="eyebrow">Investment underwriting · proposed MVP</span>
+    <h2>Test the deal, not just the land.</h2>
+    <p>Enter your own assumptions to estimate capital required, cash flow, exit proceeds, and a maximum purchase price for your target return. These calculations are illustrative and are not an appraisal or investment advice.</p>
+  </div>
+  <div class="uw-shell">
+    <div class="uw-topline">
+      <p><strong style="color:var(--ink)">Transparent model.</strong> All financial assumptions below are user-entered. The downside and upside cases apply explicit stress adjustments shown under the results.</p>
+      <span class="lens-tag" style="background:var(--gold-dim);color:var(--gold)">Local calculator · no account needed</span>
+    </div>
+    <div class="uw-grid">
+      <div class="uw-inputs">
+        <h3>Deal assumptions</h3>
+        <div class="uw-fields">
+          <div class="uw-field"><label for="uw-price">Asking / purchase price ($)</label><input id="uw-price" type="number" min="1" step="1000" value="500000"></div>
+          <div class="uw-field"><label for="uw-closing">Closing costs (%)</label><input id="uw-closing" type="number" min="0" max="25" step="0.25" value="3"></div>
+          <div class="uw-field"><label for="uw-dd">Due diligence costs ($)</label><input id="uw-dd" type="number" min="0" step="100" value="5000"></div>
+          <div class="uw-field"><label for="uw-improvements">Initial improvements ($)</label><input id="uw-improvements" type="number" min="0" step="1000" value="25000"></div>
+          <div class="uw-field"><label for="uw-revenue">Annual gross income ($)</label><input id="uw-revenue" type="number" min="0" step="1000" value="60000"></div>
+          <div class="uw-field"><label for="uw-expenses">Annual operating costs ($)</label><input id="uw-expenses" type="number" min="0" step="1000" value="22000"></div>
+          <div class="uw-field"><label for="uw-years">Holding period (years)</label><input id="uw-years" type="number" min="1" max="40" step="1" value="5"></div>
+          <div class="uw-field"><label for="uw-appreciation">Annual appreciation (%)</label><input id="uw-appreciation" type="number" min="-30" max="50" step="0.5" value="3"></div>
+          <div class="uw-field"><label for="uw-ltv">Loan-to-value (%)</label><input id="uw-ltv" type="number" min="0" max="90" step="1" value="60"></div>
+          <div class="uw-field"><label for="uw-rate">Annual interest rate (%)</label><input id="uw-rate" type="number" min="0" max="40" step="0.25" value="7"></div>
+          <div class="uw-field"><label for="uw-sale">Selling costs at exit (%)</label><input id="uw-sale" type="number" min="0" max="25" step="0.25" value="6"></div>
+          <div class="uw-field"><label for="uw-target">Target total ROI (%)</label><input id="uw-target" type="number" min="0" max="1000" step="5" value="25"></div>
+        </div>
+        <p class="uw-note">Model assumptions: financing is modeled as interest-only, with the original loan principal repaid at exit. Taxes, loan fees, principal amortization, working capital, vacancies, capex after acquisition, transaction-specific legal costs and income growth are excluded unless you include them in your inputs. This simplified model is for early screening only.</p>
+      </div>
+      <div class="uw-results" aria-live="polite">
+        <h3>Base-case outputs</h3>
+        <div class="uw-kpis">
+          <div class="uw-kpi"><div class="k">Initial cash required</div><div class="v" id="uw-equity">—</div><div class="s">Down payment + fees + improvements</div></div>
+          <div class="uw-kpi"><div class="k">Annual cash flow</div><div class="v" id="uw-cashflow">—</div><div class="s">After modeled interest expense</div></div>
+          <div class="uw-kpi"><div class="k">Estimated total profit</div><div class="v" id="uw-profit">—</div><div class="s">Holding cash flow + exit proceeds − initial cash</div></div>
+          <div class="uw-kpi"><div class="k">Total ROI on cash invested</div><div class="v" id="uw-roi">—</div><div class="s">Not annualized IRR</div></div>
+          <div class="uw-kpi"><div class="k">Estimated exit value</div><div class="v" id="uw-exit">—</div><div class="s">Based on user-entered appreciation</div></div>
+          <div class="uw-kpi"><div class="k">Maximum purchase price</div><div class="v" id="uw-maxprice">—</div><div class="s">For your target total ROI under this model</div></div>
+        </div>
+        <table class="uw-scenarios">
+          <thead><tr><th>Scenario</th><th>Profit</th><th>Total ROI</th><th>Exit value</th></tr></thead>
+          <tbody id="uw-scenario-body"></tbody>
+        </table>
+        <div class="uw-callout" id="uw-assumptions-note">Stress cases use default adjustments: downside revenue −20%, operating costs +15%, appreciation −2 percentage points; upside revenue +10%, operating costs −5%, appreciation +2 percentage points. These are user-editable model assumptions only by editing the source code—not forecasts.</div>
+        <div class="uw-actions"><button type="button" id="uw-reset">Reset example inputs</button><button type="button" id="uw-export">Export underwriting CSV</button><button type="button" id="uw-print">Print / save brief</button></div>
+        <p class="uw-status" id="uw-status">Calculations run locally in your browser. No financial inputs are sent to a server.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="lease" class="lease-section" aria-labelledby="leaseHeading">
+<div class="wrap">
+  <div class="section-head">
+    <span class="eyebrow">Agricultural lease screen · prototype</span>
+    <h2 id="leaseHeading">Screen a farm lease before you commit.</h2>
+    <p>Combine a parcel scan with the lease terms you have been offered. You get a screening memo, an evidence appendix and a due-diligence checklist, with every rule shown. This is not legal review, an appraisal or approval to sign.</p>
+  </div>
+  <div class="ls-shell">
+    <div class="ls-toolbar ls-noprint">
+      <div class="ls-field"><label for="ls-record">Saved screens</label><select id="ls-record"></select></div>
+      <button type="button" class="ls-btn" id="ls-new">New screen</button>
+      <button type="button" class="ls-btn" id="ls-demo">Load fictional example</button>
+      <button type="button" class="ls-btn ls-btn-danger" id="ls-delete">Delete screen</button>
+    </div>
+    <p class="ls-store-note ls-noprint"><strong>Saved in this browser only.</strong> Screens are kept in this browser's local storage. They are not shared with your team and this is not secure document storage. Saved reports may contain commercially sensitive information, so clear them from shared computers and take care where you send exports.</p>
+    <div id="ls-alert" class="ls-noprint" role="status" aria-live="polite"></div>
+    <nav aria-label="Lease screen steps" class="ls-noprint">
+      <ol class="ls-steps">
+        <li><a href="#ls-parcel">Parcel scan</a></li>
+        <li><a href="#ls-form">Lease inputs</a></li>
+        <li><a href="#ls-report">Memo</a></li>
+        <li><a href="#ls-tasks">Evidence and tasks</a></li>
+        <li><a href="#ls-export">Print or export</a></li>
+      </ol>
+    </nav>
+    <div class="ls-block" id="ls-parcel">
+      <h3><span class="ls-num">1</span>Parcel scan</h3>
+      <div id="ls-parcel-body"></div>
+    </div>
+    <form class="ls-block" id="ls-form" novalidate>
+      <h3><span class="ls-num">2</span>Lease inputs</h3>
+      <p class="ls-lead">Leave anything you do not know blank or Unknown. Blanks are reported as missing, never as zero or as a negative finding.</p>
+      <div id="ls-form-body"></div>
+      <div class="ls-errors" id="ls-errors" role="alert" tabindex="-1" hidden></div>
+      <div class="ls-actions"><button type="submit" class="ls-btn ls-btn-primary">Generate memo</button></div>
+    </form>
+    <div class="ls-block" id="ls-report">
+      <h3 class="ls-noprint"><span class="ls-num">3</span>Memo</h3>
+      <p class="ls-notice ls-notice-warn ls-stale ls-noprint" id="ls-stale" hidden>Inputs changed since this memo was generated. Select Generate memo to update it. Your task edits and review history are kept.</p>
+      <div id="ls-report-body"></div>
+    </div>
+    <div class="ls-block ls-noprint" id="ls-tasks">
+      <h3><span class="ls-num">4</span>Evidence and tasks</h3>
+      <div id="ls-tasks-body"></div>
+    </div>
+    <div class="ls-block ls-noprint" id="ls-export">
+      <h3><span class="ls-num">5</span>Print or export</h3>
+      <p class="ls-lead">Print uses your browser's print dialog; choose Save as PDF to keep a copy. Exports include everything you entered.</p>
+      <div class="ls-actions">
+        <button type="button" class="ls-btn" id="ls-print" disabled>Print / Save as PDF</button>
+        <button type="button" class="ls-btn" id="ls-md" disabled>Download Markdown</button>
+        <button type="button" class="ls-btn" id="ls-json" disabled>Download JSON</button>
+      </div>
+    </div>
+  </div>
 </div>
 </section>
 
@@ -597,6 +754,8 @@ padding:7px 11px;border-radius:2px;backdrop-filter:blur(6px);
 <a href="#lenses">Lenses</a>
 <a href="#how">How it works</a>
 <a href="#demo">Demo</a>
+<a href="#underwrite">Underwrite</a>
+<a href="#lease">Lease screen</a>
 <a href="mailto:hello@canopy.ai">Contact</a>
 </div>
 <div class="foot-note">© 2026 Canopy AI</div>
@@ -709,10 +868,139 @@ async function getFloodZone(lat, lon){
   if(!res.ok) throw new Error('flood lookup failed (' + res.status + ')');
   const data = await res.json();
   if(!data.features || !data.features.length){
-    return { zone: 'X', subtype: 'AREA OF MINIMAL FLOOD HAZARD (assumed, unmapped)' };
+    // No returned polygon is not proof of Zone X. Keep the result unknown.
+    return { zone: null, subtype: 'No FEMA flood-zone feature returned; verify map coverage', unmapped: true };
   }
   const attrs = data.features[0].attributes;
-  return { zone: attrs.FLD_ZONE || 'X', subtype: attrs.ZONE_SUBTY || '' };
+  if(!attrs.FLD_ZONE){
+    return { zone: null, subtype: 'FEMA feature returned without a flood-zone code', unmapped: true };
+  }
+  return { zone: attrs.FLD_ZONE, subtype: attrs.ZONE_SUBTY || '', unmapped: false };
+}
+
+// ---- Existing structures (FEMA USA Structures) ----
+// Building footprints over 450 sq ft for the whole US, tagged by use
+// (residential, agriculture, commercial...). We count what stands on the
+// parcel, and how many buildings sit within 1 km. That nearby count is a rough
+// stand-in for road and utility access, which we can't query directly yet.
+const STRUCTURES_URL = 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/ArcGIS/rest/services/USA_Structures_View/FeatureServer/0/query';
+const STRUCT_POINT_RADIUS_M = 150;   // no drawn parcel: look ~150 m around the point
+const STRUCT_NEARBY_M = 1000;
+const STRUCT_MAX = 500;              // cap on footprints pulled for one parcel
+
+// Esri treats counter-clockwise rings as holes, so make the outline clockwise.
+function clockwiseRing(corners){
+  const ring = corners.map(p => [p.lng, p.lat]);
+  let area = 0;
+  for(let i = 0; i < ring.length; i++){
+    const [x1, y1] = ring[i], [x2, y2] = ring[(i+1) % ring.length];
+    area += x1*y2 - x2*y1;
+  }
+  if(area > 0) ring.reverse();
+  ring.push(ring[0].slice());
+  return ring;
+}
+
+const isYes = v => /^(y|yes|true|1)$/i.test(String(v || '').trim());
+
+function summarizeStructures(features, areaM2){
+  let homes = 0, farm = 0, other = 0, sqft = 0;
+  features.forEach(f => {
+    const p = f.properties || f.attributes || {};
+    const occ = String(p.OCC_CLS || '').toLowerCase();
+    if(occ === 'agriculture' || isYes(p.OUTBLDG)) farm++;
+    else if(occ === 'residential') homes++;
+    else other++;
+    sqft += Number(p.SQFEET) || 0;
+  });
+  const roofM2 = sqft * 0.09290304;
+  return { count: features.length, homes, farm, other, sqft: Math.round(sqft),
+    coverPct: areaM2 ? Math.round(roofM2 / areaM2 * 1000) / 10 : null };
+}
+
+async function getStructures(lat, lon, corners, areaM2){
+  const drawn = corners && corners.length >= 3;
+  const where = drawn
+    ? { geometry: JSON.stringify({ rings: [clockwiseRing(corners)], spatialReference: { wkid: 4326 } }), geometryType: 'esriGeometryPolygon' }
+    : { geometry: lon + ',' + lat, geometryType: 'esriGeometryPoint', distance: String(STRUCT_POINT_RADIUS_M), units: 'esriSRUnit_Meter' };
+  const onParams = new URLSearchParams(Object.assign({
+    inSR: '4326', spatialRel: 'esriSpatialRelIntersects',
+    outFields: 'OCC_CLS,PRIM_OCC,OUTBLDG,SQFEET',
+    returnGeometry: 'true', outSR: '4326', geometryPrecision: '6',
+    resultRecordCount: String(STRUCT_MAX), f: 'geojson'
+  }, where));
+  const nearParams = new URLSearchParams({
+    geometry: lon + ',' + lat, geometryType: 'esriGeometryPoint', inSR: '4326',
+    distance: String(STRUCT_NEARBY_M), units: 'esriSRUnit_Meter',
+    spatialRel: 'esriSpatialRelIntersects', returnCountOnly: 'true', f: 'json'
+  });
+  // POST for the parcel query: a many-cornered outline can make a long URL.
+  const [onR, nearR] = await Promise.allSettled([
+    fetchWithTimeout(STRUCTURES_URL, 10000, 2, { method: 'POST', body: onParams }).then(r => {
+      if(!r.ok) throw new Error('structures lookup failed (' + r.status + ')');
+      return r.json();
+    }),
+    fetchWithTimeout(STRUCTURES_URL + '?' + nearParams.toString(), 10000, 2).then(r => {
+      if(!r.ok) throw new Error('nearby structures lookup failed (' + r.status + ')');
+      return r.json();
+    })
+  ]);
+  if(onR.status !== 'fulfilled') throw onR.reason;
+  const onData = onR.value;
+  if(onData.error) throw new Error('structures lookup failed (' + (onData.error.message || 'server error') + ')');
+  const features = onData.features || [];
+  const area = drawn ? areaM2 : Math.PI * STRUCT_POINT_RADIUS_M ** 2;
+  const nearby = nearR.status === 'fulfilled' && typeof nearR.value.count === 'number' ? nearR.value.count : null;
+  return Object.assign(summarizeStructures(features, area), {
+    nearby, scope: drawn ? 'on parcel' : 'within ' + STRUCT_POINT_RADIUS_M + ' m',
+    truncated: features.length >= STRUCT_MAX, geojson: onData
+  });
+}
+
+function structuresText(st){
+  if(!st.count) return 'none ' + st.scope;
+  const parts = [];
+  if(st.homes) parts.push(st.homes + (st.homes === 1 ? ' home' : ' homes'));
+  if(st.farm) parts.push(st.farm + ' farm/outbuilding' + (st.farm === 1 ? '' : 's'));
+  if(st.other) parts.push(st.other + ' other');
+  return (st.truncated ? st.count + '+' : st.count) + ' ' + st.scope + ' (' + parts.join(', ') + ')' +
+    (st.coverPct !== null ? ' · ' + st.sqft.toLocaleString() + ' sq ft, ' + st.coverPct + '% of area' : '');
+}
+
+// ---- County land value & cash rent (USDA NASS, pre-downloaded) ----
+// land_values.js is built once by scripts/fetch_land_values.js, so a scan
+// makes no call to USDA. The FCC's free Census Area API gives the county.
+async function getCountyFips(lat, lon){
+  const res = await fetchWithTimeout('https://geo.fcc.gov/api/census/area?format=json&lat=' + lat + '&lon=' + lon, 8000, 2);
+  if(!res.ok) throw new Error('county lookup failed (' + res.status + ')');
+  const data = await res.json();
+  const r = data.results && data.results[0];
+  if(!r || !r.county_fips) throw new Error('no US county at this point');
+  return { fips: r.county_fips, name: r.county_name, state: r.state_code };
+}
+
+async function getLandValue(lat, lon){
+  const lv = window.LAND_VALUES;
+  if(!lv || !lv.counties) throw new Error('land_values.js not loaded; run scripts/fetch_land_values.js');
+  const county = await getCountyFips(lat, lon);
+  const row = lv.counties[county.fips];
+  if(!row) throw new Error('no USDA figures for ' + county.name + ' County');
+  return Object.assign({ fips: county.fips }, row);
+}
+
+const money0 = n => '$' + Math.round(n).toLocaleString();
+
+function landValueText(v){
+  return v.valuePerAcre ? money0(v.valuePerAcre) + '/acre · ' + v.county + ' County, ' + v.state + ' (' + v.valueYear + ' census)' : 'not published for this county';
+}
+function rentText(v){
+  const parts = [];
+  if(v.cropNonIrr) parts.push('cropland ' + money0(v.cropNonIrr));
+  if(v.cropIrr) parts.push('irrigated ' + money0(v.cropIrr));
+  if(v.pasture) parts.push('pasture ' + money0(v.pasture));
+  if(!parts.length) return null;
+  const yr = Math.max(v.cropNonIrrYear || 0, v.cropIrrYear || 0, v.pastureYear || 0);
+  return parts.join(' · ') + ' per acre/yr (' + yr + ')';
 }
 
 // ---- Distance to nearest stream/river (USGS National Hydrography Dataset) ----
@@ -1038,11 +1326,30 @@ const USE_PROFILES = {
   }
 };
 
+// Residential: a house lot or rural homesite. Housing leads; Farmland is read
+// as garden or hobby-farm potential, so (like Vacant) today's land cover only
+// catches pavement and water, and homes on the lot are expected, not a flag.
+USE_PROFILES['Residential / homesite'] = {
+  focus: 'house',
+  expect: ['residential'],
+  expectLabel: 'homes or developed land',
+  capCurve:   [[1,98],[2,88],[3,72],[4,55],[5,38],[6,25],[7,12],[8,4]],
+  slopeCurve: [[0,95],[2,95],[5,88],[8,72],[15,45],[25,20],[40,6]],
+  cover: COVER_FARM,
+  rain: [50, 380, 900, 1600],
+  elev: [-50, 0, 1200, 2800],
+  w: { cap: 0.36, cls: 0.18, slope: 0.18, cover: 0, rain: 0.17, elev: 0.11, water: 0 },
+  freshwater: { rain: 0.45, stream: 0.55 }
+};
+
 function useProfile(use){ return USE_PROFILES[use] || USE_PROFILES['Row crop']; }
 
 const STREAM_CURVE = [[0,95],[1,95],[3,80],[6,60],[10,42],[15,25]];
 
-function scoreFarmland({ soil, landuse, precipMm, elevationM, waterKm, use }){
+// Share of the parcel under roofs -> most the Farmland score can be.
+const BUILT_CAP_CURVE = [[0,100],[5,100],[15,75],[30,50],[60,25]];
+
+function scoreFarmland({ soil, landuse, precipMm, elevationM, waterKm, use, structures }){
   const P = useProfile(use);
   const capScore = soil && curve(soil.capClass, P.capCurve);
   const cover = coverScore(landuse, P.cover);
@@ -1059,7 +1366,10 @@ function scoreFarmland({ soil, landuse, precipMm, elevationM, waterKm, use }){
     // Good rain can't make unusable soil productive.
     { name: 'soil capability', max: capScore === null ? null : capScore + 20 },
     // Prime soil under pavement or a lake isn't farmland, whatever the stated use.
-    { name: 'land cover', max: cover === null ? null : cover + 40 }
+    { name: 'land cover', max: cover === null ? null : cover + 40 },
+    // Land under buildings can't be farmed (only judged on a drawn parcel).
+    { name: 'buildings on parcel', max: structures && structures.scope === 'on parcel' && structures.coverPct !== null
+        ? curve(structures.coverPct, BUILT_CAP_CURVE) : null }
   ]);
 }
 
@@ -1073,7 +1383,7 @@ function scoreFreshwater({ precipMm, waterKm, use }){
 
 // Plain-language flags for the memo: a stated use that the land cover
 // contradicts, and use-specific risks.
-function useNotes({ use, landuse, elevationM }){
+function useNotes({ use, landuse, elevationM, structures }){
   const P = useProfile(use), notes = [];
   if(landuse && landuse.dominant && landuse.share >= 50 && !P.expect.includes(landuse.dominant)){
     notes.push('Check: you said "' + use + '", but land cover is mostly ' + landuse.label.toLowerCase() +
@@ -1084,18 +1394,38 @@ function useNotes({ use, landuse, elevationM }){
   }
   if(use === 'Vacant / undeveloped'){
     notes.push('Vacant land: Farmland is scored on soil, slope and climate only. Current land cover is used just to catch pavement.');
+    if(structures && structures.homes > 0)
+      notes.push('Check: you said "Vacant", but FEMA maps ' + structures.homes + (structures.homes === 1 ? ' home ' : ' homes ') + structures.scope + '.');
   }
+  if(use === 'Residential / homesite'){
+    notes.push('Residential: Housing leads. Farmland here means garden or hobby-farm potential, scored on soil, slope and climate.');
+    if(structures && structures.homes === 0)
+      notes.push('Check: you said "Residential", but FEMA maps no homes ' + structures.scope + '. It may be an empty lot, or a home under 450 sq ft.');
+    else if(structures && structures.homes > 0)
+      notes.push(structures.homes + (structures.homes === 1 ? ' existing home ' : ' existing homes ') + structures.scope + ': power, water and road access are likely already in place.');
+  }
+  if(structures && structures.scope === 'on parcel' && structures.coverPct !== null && structures.coverPct >= 15)
+    notes.push('Buildings cover about ' + structures.coverPct + '% of this parcel, which limits farmable ground.');
+  if(structures && structures.nearby === 0)
+    notes.push('No buildings within 1 km: roads, power and water may need to be brought in for housing.');
+  if(structures && structures.truncated)
+    notes.push('Very built-up parcel: only the first ' + STRUCT_MAX + ' buildings were counted.');
   return notes;
 }
 
-function scoreHousing({ floodZone, soil, landuse, elevationM }){
-  const flood = floodZone ? (FLOOD_SCORES[floodZone.zone] !== undefined ? FLOOD_SCORES[floodZone.zone] : 55) : null;
+// Buildings within 1 km -> 0-100. Neighbors usually mean roads, power and
+// water lines nearby; none at all means extending them, which is costly.
+const NEARBY_CURVE = [[0,25],[3,45],[15,70],[60,90],[400,88],[2000,78]];
+
+function scoreHousing({ floodZone, soil, landuse, elevationM, structures }){
+  const flood = floodZone && floodZone.zone ? (FLOOD_SCORES[floodZone.zone] !== undefined ? FLOOD_SCORES[floodZone.zone] : 55) : null;
   const slopeScore = soil && curve(soil.slopePct, [[0,88],[3,95],[8,85],[12,68],[18,42],[25,22],[35,10],[50,4]]);
   return combine([
-    { name: 'flood zone',  weight: 0.30, score: flood },
-    { name: 'slope',       weight: 0.30, score: slopeScore },
-    { name: 'land cover',  weight: 0.25, score: coverScore(landuse, COVER_HOUSE) },
-    { name: 'elevation',   weight: 0.15, score: triangularScore(elevationM, -50, 0, 900, 2500) }
+    { name: 'flood zone',       weight: 0.27, score: flood },
+    { name: 'slope',            weight: 0.27, score: slopeScore },
+    { name: 'land cover',       weight: 0.20, score: coverScore(landuse, COVER_HOUSE) },
+    { name: 'elevation',        weight: 0.11, score: triangularScore(elevationM, -50, 0, 900, 2500) },
+    { name: 'nearby buildings', weight: 0.15, score: structures && structures.nearby !== null ? curve(structures.nearby, NEARBY_CURVE) : null }
   ], [
     { name: 'slope',      max: slopeScore === null ? null : slopeScore + 25 },
     { name: 'flood zone', max: flood === null ? null : flood + 30 },
@@ -1188,7 +1518,15 @@ function addCorner(latlng){
   redrawParcel(true);
 }
 
+let structureLayer = null;
+function showStructures(geojson){
+  if(structureLayer){ structureLayer.remove(); structureLayer = null; }
+  if(!parcelMap || typeof L === 'undefined' || !geojson || !geojson.features || !geojson.features.length) return;
+  structureLayer = L.geoJSON(geojson, { interactive: false, style: { color: '#C1793C', weight: 1, fillColor: '#C1793C', fillOpacity: 0.55 } }).addTo(parcelMap);
+}
+
 function clearParcel(){
+  showStructures(null);
   parcel.markers.forEach(m => m.remove());
   if(parcel.shape) parcel.shape.remove();
   parcel.corners = []; parcel.markers = []; parcel.shape = null; parcel.center = null;
@@ -1335,13 +1673,17 @@ document.getElementById('runScan').addEventListener('click', async function(){
     status.textContent = 'Pulling climate, flood, soil, and land-cover data...';
 
     const samples = parcelSamplePoints() || [{ lat: location.lat, lon: location.lon }];
-    const [climateR, elevR, floodR, waterR, luR, soilR] = await Promise.allSettled([
+    const drawnCorners = parcel.corners.length >= 3 ? parcel.corners.slice() : null;
+    const drawnAreaM2 = drawnCorners ? polygonAreaM2(drawnCorners) : null;
+    const [climateR, elevR, floodR, waterR, luR, soilR, structR, valueR] = await Promise.allSettled([
       getClimate(location.lat, location.lon),
       getElevation(location.lat, location.lon),
       getFloodZone(location.lat, location.lon),
       getNearestWaterKm(location.lat, location.lon),
       getLanduseContext(location.lat, location.lon, samples),
-      getSoil(samples)
+      getSoil(samples),
+      getStructures(location.lat, location.lon, drawnCorners, drawnAreaM2),
+      getLandValue(location.lat, location.lon)
     ]);
 
     const climate = climateR.status === 'fulfilled' ? climateR.value : null;
@@ -1350,13 +1692,18 @@ document.getElementById('runScan').addEventListener('click', async function(){
     const water = waterR.status === 'fulfilled' ? waterR.value : null;
     const landuse = luR.status === 'fulfilled' ? luR.value : null;
     const soil = soilR.status === 'fulfilled' ? soilR.value : null;
+    const structures = structR.status === 'fulfilled' ? structR.value : null;
+    const landValue = valueR.status === 'fulfilled' ? valueR.value : null;
+    showStructures(structures && structures.geojson);
 
     sources.push({ label: parcel.corners.length && location.displayName.startsWith('map') ? 'Location (map selection)' : 'Geocoding (OpenStreetMap)', ok: true, detail: location.displayName.slice(0,40) });
     sources.push({ label: 'Climate — annual precip (Open-Meteo)', ok: !!climate, detail: climate ? climate.annualPrecipMm + ' mm/yr' : '' });
     sources.push({ label: 'Elevation (Open-Elevation)', ok: !!elev, detail: elev ? Math.round(elev.elevationM) + ' m' : '' });
-    sources.push({ label: 'FEMA flood zone', ok: !!flood, detail: flood ? 'Zone ' + flood.zone : '' });
+    sources.push({ label: 'FEMA flood zone', ok: !!(flood && flood.zone), detail: flood && flood.zone ? 'Zone ' + flood.zone : (flood ? 'unmapped / unknown' : '') });
     sources.push({ label: 'Nearest stream/river (USGS NHD)', ok: !!water, detail: water ? waterText(water) : '' });
     sources.push({ label: 'Land cover (NLCD 2021)', ok: !!landuse, detail: landuse ? landuse.label + ' · ' + landuse.share + '% of ' + landuse.samples + ' pts' : '' });
+    sources.push({ label: 'Structures (FEMA USA Structures)', ok: !!structures, detail: structures ? (structures.truncated ? structures.count + '+' : structures.count) + ' ' + structures.scope + (structures.nearby !== null ? ' · ' + structures.nearby.toLocaleString() + ' within 1 km' : '') : '' });
+    sources.push({ label: 'Land value & rent (USDA NASS)', ok: !!landValue, detail: landValue ? landValue.county + ' County, ' + landValue.state : '' });
     sources.push({ label: 'Soil survey (USDA SSURGO)', ok: !!soil, detail: soil ? (soil.mapUnit || '').split(',')[0].slice(0,28) + ' · ' + soil.share + '% of ' + soil.samples + ' pts' : '' });
 
     const precipMm = climate ? climate.annualPrecipMm : null;
@@ -1364,9 +1711,9 @@ document.getElementById('runScan').addEventListener('click', async function(){
     // Nothing within the search radius is real data ("far from water"), not a failure.
     const waterKm = water ? (water.nearestKm !== null ? water.nearestKm : water.beyondKm + 2) : null;
 
-    const farm = scoreFarmland({ soil, landuse, precipMm, elevationM, waterKm, use });
+    const farm = scoreFarmland({ soil, landuse, precipMm, elevationM, waterKm, use, structures });
     const freshwater = scoreFreshwater({ precipMm, waterKm, use });
-    const housing = scoreHousing({ floodZone: flood, soil, landuse, elevationM });
+    const housing = scoreHousing({ floodZone: flood, soil, landuse, elevationM, structures });
 
     // How mixed is the parcel? 0 = uniform, ~0.8 = very mixed. A single point
     // tells us nothing about the rest of the parcel, so treat it as moderately unknown.
@@ -1383,7 +1730,7 @@ document.getElementById('runScan').addEventListener('click', async function(){
     const focus = useProfile(use).focus;
     document.getElementById('mFarm').parentElement.classList.toggle('focus', focus === 'farm');
     document.getElementById('mHouse').parentElement.classList.toggle('focus', focus === 'house');
-    const notes = useNotes({ use, landuse, elevationM });
+    const notes = useNotes({ use, landuse, elevationM, structures });
     const notesEl = document.getElementById('mNotes');
     notesEl.innerHTML = notes.map(n => '<div class="memo-note">' + n.replace(/</g, '&lt;') + '</div>').join('');
     notesEl.style.display = notes.length ? 'block' : 'none';
@@ -1396,10 +1743,65 @@ document.getElementById('runScan').addEventListener('click', async function(){
     document.getElementById('mCap').textContent = soil && soil.capClass !== null
       ? 'Class ' + soil.capClass.toFixed(1) + ' · ' + (soil.slopePct !== null ? Math.round(soil.slopePct) + '% slope' : 'slope n/a')
       : 'unavailable';
-    document.getElementById('mFlood').textContent = flood ? ('Zone ' + flood.zone + (flood.subtype ? ' — ' + flood.subtype : '')) : 'unavailable';
+    document.getElementById('mFlood').textContent = flood ? (flood.zone ? ('Zone ' + flood.zone + (flood.subtype ? ' — ' + flood.subtype : '')) : ('Unknown / unmapped — ' + flood.subtype)) : 'unavailable';
+    document.getElementById('mStruct').textContent = structures ? structuresText(structures) : 'unavailable';
+    document.getElementById('mNearby').textContent = structures && structures.nearby !== null ? structures.nearby.toLocaleString() + ' buildings' : 'unavailable';
+    const acresNum = parseFloat(String(acres).replace(/,/g, ''));
+    document.getElementById('mCountyVal').textContent = landValue ? landValueText(landValue) : 'unavailable';
+    document.getElementById('mBench').textContent = landValue && landValue.valuePerAcre && acresNum > 0
+      ? money0(landValue.valuePerAcre * acresNum) + ' for ' + acresNum.toLocaleString() + ' acres · county average, not an appraisal'
+      : 'unavailable';
+    document.getElementById('mRent').textContent = landValue ? (rentText(landValue) || 'not published for this county') : 'unavailable';
     document.getElementById('mTime').textContent = ((Date.now()-t0)/1000).toFixed(1) + 's';
 
     renderSources(sources);
+
+    // Publish this scan for the agricultural lease screen (lease-ui.js).
+    // Only metadata the scan actually has is included.
+    try {
+      const scannedAt = new Date().toISOString();
+      const pointBasis = 'Single point at parcel center';
+      const sampleBasis = samples.length > 1 ? samples.length + ' sample points across the drawn parcel' : pointBasis;
+      const errOf = r => r && r.status === 'rejected' ? String((r.reason && r.reason.message) || r.reason).slice(0, 120) : '';
+      const obs = (key, name, r, ok, value, units, source, basis, extra) => Object.assign({
+        key, name, category: 'public_data', status: ok ? 'ok' : 'failed', error: ok ? '' : (errOf(r) || 'no data returned'),
+        value: ok ? value : null, units: units || '', source, basis, retrievedAt: scannedAt }, extra || {});
+      const drawnAcres = parcel.corners.length >= 3 ? polygonAreaM2(parcel.corners) / ACRE_M2 : null;
+      const observations = [
+        drawnAcres !== null
+          ? { key: 'acreage', name: 'Drawn parcel area', category: 'calculated', status: 'ok', value: Math.round(drawnAcres * 10) / 10, units: 'acres',
+              source: 'Calculated from map outline', basis: parcel.corners.length + '-corner outline drawn by user', retrievedAt: scannedAt, limitations: 'Hand-drawn outline, not a surveyed boundary.' }
+          : { key: 'acreage', name: 'Acreage entered on scan form', category: 'user_statement', status: acres !== '—' ? 'ok' : 'failed', error: acres !== '—' ? '' : 'not entered',
+              value: acres !== '—' ? acres : null, units: 'acres', source: 'Scan form', basis: 'Not measured', retrievedAt: scannedAt },
+        obs('precip', 'Precipitation, trailing 12 months', climateR, !!climate, precipMm, 'mm', 'Open-Meteo historical weather archive', pointBasis,
+          { limitations: 'Trailing 12 months ending about 7 days before retrieval; not a long-term average.' }),
+        obs('elevation', 'Elevation', elevR, !!elev, elev ? Math.round(elev.elevationM) : null, 'm', 'Open-Elevation', pointBasis),
+        obs('flood', 'FEMA flood zone', floodR, !!flood, flood ? (flood.zone ? 'Zone ' + flood.zone + (flood.subtype ? ' (' + flood.subtype + ')' : '') : 'Unknown / unmapped') : null, '',
+          'FEMA National Flood Hazard Layer', pointBasis, { limitations: 'Not an official flood determination. No mapped feature is treated as unknown.' }),
+        obs('stream', 'Nearest stream or river', waterR, !!water, water ? waterText(water) : null, '', 'USGS National Hydrography Dataset', pointBasis,
+          { limitations: 'Distance to mapped water is not evidence of water rights or supply.' }),
+        obs('landcover', 'Land cover', luR, !!landuse, landuse ? landuse.label + ' (' + landuse.share + '% of ' + landuse.samples + ' points)' : null, '',
+          'National Land Cover Database (NLCD)', sampleBasis, { datasetDate: '2021', limitations: 'Lower 48 states only.' }),
+        obs('soil', 'Soil map unit', soilR, !!(soil && soil.mapUnit), soil ? soil.mapUnit : null, '', 'USDA SSURGO (Soil Data Access)', sampleBasis),
+        obs('capability', 'Capability class and slope', soilR, !!(soil && typeof soil.capClass === 'number'),
+          soil && typeof soil.capClass === 'number' ? 'Class ' + soil.capClass.toFixed(1) + (typeof soil.slopePct === 'number' ? ', ' + Math.round(soil.slopePct) + '% slope' : '') : null, '',
+          'USDA SSURGO (Soil Data Access)', sampleBasis),
+        obs('farmClass', 'Farmland class', soilR, !!(soil && soil.farmClass), soil ? soil.farmClass : null, '', 'USDA SSURGO (Soil Data Access)', sampleBasis),
+        obs('structures', 'Existing structures', structR, !!structures, structures ? structuresText(structures) : null, '', 'FEMA USA Structures',
+          structures ? (structures.scope === 'on parcel' ? 'Inside the drawn outline' : 'Within 150 m of the parcel center') : pointBasis,
+          { limitations: 'Footprints over 450 sq ft only; counts are not an inspection of condition or permits.' }),
+        obs('nearbyBuildings', 'Buildings within 1 km', structR, !!(structures && structures.nearby !== null), structures ? structures.nearby : null, 'buildings',
+          'FEMA USA Structures', '1 km radius of parcel center', { limitations: 'Rough proxy for road and utility access; not a utility check.' }),
+        obs('countyRent', 'County average cash rent', valueR, !!(landValue && rentText(landValue)), landValue ? rentText(landValue) : null, '',
+          'USDA NASS county cash rents (pre-downloaded)', landValue ? landValue.county + ' County, ' + landValue.state + ' average' : 'County average',
+          { limitations: 'County-wide average for context only; not a market-rent estimate for this parcel.' })
+      ];
+      const pickScore = x => x ? { score: x.score, coverage: x.coverage, cappedBy: x.cappedBy || null } : null;
+      const snapshot = { label: locInput, lat: +location.lat.toFixed(5), lon: +location.lon.toFixed(5), acresEntered: acres, use, scannedAt, observations,
+        scores: { farm: pickScore(farm), freshwater: pickScore(freshwater), housing: pickScore(housing) } };
+      window.CanopyLastScan = snapshot;
+      document.dispatchEvent(new CustomEvent('canopy:scan', { detail: snapshot }));
+    } catch(hookErr){ console.warn('Lease screen snapshot failed:', hookErr); }
 
     document.getElementById('demoEmpty').style.display = 'none';
     const memo = document.getElementById('memoOut');
@@ -1416,5 +1818,100 @@ document.getElementById('runScan').addEventListener('click', async function(){
   }
 });
 </script>
+
+<script>
+/*
+ * Canopy Underwriter MVP v0.2
+ * Transparent, deterministic screening calculator.
+ * The scenario adjustments and financing assumptions are illustrative defaults.
+ */
+(function(){
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const ids = ['price','closing','dd','improvements','revenue','expenses','years','appreciation','ltv','rate','sale','target'];
+  const defaults = {price:500000,closing:3,dd:5000,improvements:25000,revenue:60000,expenses:22000,years:5,appreciation:3,ltv:60,rate:7,sale:6,target:25};
+  const money = n => Number.isFinite(n) ? n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}) : '—';
+  const pct = n => Number.isFinite(n) ? n.toFixed(1)+'%' : '—';
+  const num = id => Number.parseFloat($( 'uw-'+id ).value);
+  const getInputs = () => Object.fromEntries(ids.map(k=>[k,num(k)]));
+  function validate(a){
+    for(const [k,v] of Object.entries(a)) if(!Number.isFinite(v)) return 'Enter a valid number for every field.';
+    if(a.price<=0) return 'Purchase price must be greater than zero.';
+    if(a.years<1 || a.years>40) return 'Holding period must be between 1 and 40 years.';
+    if(a.closing<0 || a.closing>25 || a.sale<0 || a.sale>25) return 'Transaction cost percentages must be between 0% and 25%.';
+    if(a.ltv<0 || a.ltv>90) return 'Loan-to-value must be between 0% and 90%.';
+    if(a.rate<0 || a.rate>40) return 'Interest rate must be between 0% and 40%.';
+    if(a.appreciation < -30 || a.appreciation > 50) return 'Appreciation must be between -30% and 50%.';
+    if(a.revenue<0 || a.expenses<0 || a.dd<0 || a.improvements<0) return 'Income, expenses and costs cannot be negative.';
+    if(a.target<0 || a.target>1000) return 'Target ROI must be between 0% and 1,000%.';
+    return null;
+  }
+  function model(a, overrides={}){
+    const revenue = overrides.revenue ?? a.revenue;
+    const expenses = overrides.expenses ?? a.expenses;
+    const appreciation = overrides.appreciation ?? a.appreciation;
+    const loan = a.price*a.ltv/100;
+    const equity = a.price-loan + a.price*a.closing/100 + a.dd + a.improvements;
+    const annualCashFlow = revenue-expenses-loan*a.rate/100;
+    const exitValue = a.price*Math.pow(1+appreciation/100,a.years);
+    const exitProceeds = exitValue*(1-a.sale/100)-loan;
+    const profit = annualCashFlow*a.years+exitProceeds-equity;
+    const roi = equity>0 ? profit/equity*100 : NaN;
+    return {loan,equity,annualCashFlow,exitValue,exitProceeds,profit,roi};
+  }
+  function maxOffer(a){
+    const target=a.target;
+    let low=1, high=Math.max(a.price*20,1000000);
+    const roiAt=p=>model({...a,price:p}).roi;
+    // At a fixed set of other assumptions, ROI is usually decreasing as price rises.
+    if(!Number.isFinite(roiAt(low)) || roiAt(low)<target) return null;
+    for(let i=0;i<90;i++){
+      const mid=(low+high)/2;
+      if(roiAt(mid)>=target) low=mid; else high=mid;
+    }
+    return low;
+  }
+  function scenario(a,type){
+    if(type==='Downside') return model(a,{revenue:a.revenue*.8,expenses:a.expenses*1.15,appreciation:Math.max(-30,a.appreciation-2)});
+    if(type==='Upside') return model(a,{revenue:a.revenue*1.1,expenses:a.expenses*.95,appreciation:Math.min(50,a.appreciation+2)});
+    return model(a);
+  }
+  function render(){
+    const a=getInputs(), err=validate(a);
+    if(err){ $('uw-status').textContent=err; return; }
+    const base=scenario(a,'Base'), down=scenario(a,'Downside'), up=scenario(a,'Upside');
+    $('uw-equity').textContent=money(base.equity);
+    $('uw-cashflow').textContent=money(base.annualCashFlow);
+    $('uw-profit').textContent=money(base.profit);
+    $('uw-roi').textContent=pct(base.roi);
+    $('uw-exit').textContent=money(base.exitValue);
+    const offer=maxOffer(a);
+    $('uw-maxprice').textContent=offer===null?'Not met':money(offer);
+    $('uw-maxprice').title=offer===null?'Target ROI is not achievable at even a nominal purchase price with these assumptions.':'Estimated maximum price based on current assumptions.';
+    $('uw-scenario-body').innerHTML=[['Downside',down],['Base',base],['Upside',up]].map(([name,m])=>`<tr><td>${name}</td><td>${money(m.profit)}</td><td>${pct(m.roi)}</td><td>${money(m.exitValue)}</td></tr>`).join('');
+    $('uw-status').textContent='Updated just now · deterministic estimate · no comps, taxes, legal feasibility or third-party valuation included.';
+    window.canopyUnderwritingResult={inputs:a,base,downside:down,upside:up,maxOffer:offer};
+  }
+  function exportCsv(){
+    render(); if(!window.canopyUnderwritingResult) return;
+    const r=window.canopyUnderwritingResult;
+    const rows=[['Canopy Underwriting Brief',''],['Generated at',new Date().toISOString()],['Metric','Value'],...Object.entries(r.inputs),['Initial cash required',r.base.equity],['Annual cash flow',r.base.annualCashFlow],['Base total profit',r.base.profit],['Base total ROI (%)',r.base.roi],['Base exit value',r.base.exitValue],['Maximum purchase price',r.maxOffer ?? 'Not met'],['Downside profit',r.downside.profit],['Downside ROI (%)',r.downside.roi],['Upside profit',r.upside.profit],['Upside ROI (%)',r.upside.roi],['Model notes','Interest-only loan; original principal repaid at exit; excludes taxes, loan fees, amortization, and other unentered costs. Scenario adjustments are illustrative, not forecasts.']];
+    const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}), url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url;a.download='canopy-underwriting-brief.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  }
+  function reset(){ids.forEach(k=>{$('uw-'+k).value=defaults[k]});render();}
+  document.addEventListener('DOMContentLoaded',()=>{
+    ids.forEach(k=> $('uw-'+k).addEventListener('input',render));
+    $('uw-reset').addEventListener('click',reset);
+    $('uw-export').addEventListener('click',exportCsv);
+    $('uw-print').addEventListener('click',()=>window.print());
+    render();
+  });
+})();
+</script>
+
+<script src="lease-core.js"></script>
+<script src="lease-ui.js"></script>
 </body>
 </html>
